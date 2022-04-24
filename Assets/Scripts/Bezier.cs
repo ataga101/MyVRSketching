@@ -7,8 +7,9 @@ public class Bezier
     public Vector3 P0, P1, P2, P3;
 
     public bool Rendered;
+    GameObject gameObject;
 
-    public int numSegment = 10;
+    public int numSegment = 100;
 
 
     public Bezier(List<Vector3> P)
@@ -17,25 +18,30 @@ public class Bezier
         this.P1 = P[1];
         this.P2 = P[2];
         this.P3 = P[3];
+        gameObject = new GameObject();
         Rendered = false;
     }
 
     public Vector3 GetPoint(float t)
-    {
+    {   
         float one_t = 1f - t;
 
         return one_t * one_t * one_t * P0 +
-            one_t * one_t * t * P1 +
-            one_t * t * t * P2 +
+            3f * one_t * one_t * t * P1 +
+            3f * one_t * t * t * P2 +
             t * t * t * P3;
     }
 
-    public void Render(LineRenderer lineRenderer)
+    public void Render()
     {
         if (Rendered) { return; }
         else
         {
             List<Vector3> Points = new List<Vector3>();
+
+            var lineRenderer = gameObject.AddComponent<LineRenderer>();
+            lineRenderer.startWidth = 0.1f;
+            lineRenderer.endWidth = 0.1f;
                 
             for(int t = 0; t <= numSegment; t++)
             {

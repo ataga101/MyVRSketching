@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Valve.VR;
 
 public class LineDrawer : MonoBehaviour
 {
@@ -12,30 +13,21 @@ public class LineDrawer : MonoBehaviour
     [System.Obsolete]
     void Awake()
     {
-        // Attach linerenderer
-        var lineRenderer = gameObject.AddComponent<LineRenderer>();
-
-
-        lineRenderer.startWidth = 0.1f;
-        lineRenderer.endWidth = 0.1f;
-
-
         this.bezier = new PolyBezier(
             new List<Vector3>() {
             new Vector3(0, 0, 0),
             new Vector3(8, 0, 0),
             new Vector3(8, -3, 0),
             new Vector3(0, -3, 0),
+            new Vector3(-4, -3, 0),
             new Vector3(0, -3, -4),
-            new Vector3(0, 0, -4),
-            new Vector3(0, 0, 0)});
+            new Vector3(0, 0, -4)});
 
-        this.bezier.Render(lineRenderer);
+        this.bezier.Render();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
     }
 }
