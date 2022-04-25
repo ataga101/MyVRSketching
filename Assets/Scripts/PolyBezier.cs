@@ -10,6 +10,7 @@ public class PolyBezier
     public PolyBezier(List<Vector3> points)
     {
         numSegments = points.Count;
+        Debug.Log(numSegments);
         for(int i=0; i<points.Count-1; i+=3)
         {
             var nowPoints = points.GetRange(i, 4);

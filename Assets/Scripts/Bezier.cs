@@ -40,8 +40,10 @@ public class Bezier
             List<Vector3> Points = new List<Vector3>();
 
             var lineRenderer = gameObject.AddComponent<LineRenderer>();
-            lineRenderer.startWidth = 0.1f;
-            lineRenderer.endWidth = 0.1f;
+            lineRenderer.startColor = new Color(1f, 1f, 1f);
+            lineRenderer.endColor = new Color(1f, 1f, 1f);
+            lineRenderer.startWidth = 0.01f;
+            lineRenderer.endWidth = 0.01f;
                 
             for(int t = 0; t <= numSegment; t++)
             {
