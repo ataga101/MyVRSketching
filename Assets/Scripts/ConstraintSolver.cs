@@ -127,12 +127,99 @@ public class ConstraintSolver
     private (Matrix<float>, Vector<float>) EPlainerMat()
     {
         var A = Matrix<float>.Build.Dense(3 * N, 3 * N);
-        var B = Vector<float>.Build.Dense(3 * N);
+        var b = Vector<float>.Build.Dense(3 * N);
 
         var normal = calcFitPlane();
 
         Matrix<float> NN = normal.ToColumnMatrix() * normal.ToRowMatrix();
 
-        return (A, B);
+
+        float factor = 2f / (N - 1);
+
+        var tangents = new List<Vector<float>>();
+
+        for(int i=0; i<N-1; i++)
+        {
+            var diff = ControlPoints[i + 1] - ControlPoints[i];
+            tangents.Add(Vector<float>.Build.Dense(new float[] { diff.x, diff.y, diff.z }));
+        }
+
+        for (int k = 0; k < N; k++)
+        {
+            Vector<float> b_k = Vector<float>.Build.Dense(3);
+
+            if (k < N - 1 && !Mathf.Approximately(tNorms[k], 0f))
+                b_k += factor * NN * tangents[k] / tNorms[k];
+            if (k > 0 && !Mathf.Approximately(tNorms[k - 1], 0f))
+                b_k += -factor * NN * tangents[k - 1] / tNorms[k - 1];
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (k < N - 1)
+                    {
+                        A[3 * k + i, 3 * k + j] += factor * NN[i, j] / tNorms[k];
+                        A[3 * k + i, 3 * (k + 1) + j] += -factor * NN[i, j] / tNorms[k];
+                    }
+                    if (k > 0)
+                    {
+                        A[3 * k + i, 3 * k + j] += factor * NN[i, j] / tNorms[k - 1];
+                        A[3 * k + i, 3 * (k - 1) + j] += -factor * NN[i, j] / tNorms[k - 1];
+                    }
+                }
+                b[3 * k + i] = b_k[i];
+            }
+            
+        }
+
+        return (A, b);
+    }
+
+    private (Matrix<float>, Vector<float>) EtangentMat(Vector3 Ttarget, int bezierIndex)
+    {
+        Matrix<float> A = Matrix<float>.Build.Dense(3 * N, 3 * N);
+        Vector<float> b = Vector<float>.Build.Dense(3 * N);
+
+        int bStart, bEnd;
+        if (bezierIndex < N - 1)
+        {
+            bStart = bezierIndex;
+            bEnd = bezierIndex + 1;
+        }
+        else
+        {
+            bStart = bezierIndex - 1;
+            bEnd = bezierIndex;
+        }
+
+        Vector3 tangent = ControlPoints[bEnd] - ControlPoints[bStart];
+
+        var crossTtarget = Matrix<float>.Build.Dense(3, 3);
+        crossTtarget[0, 1] = -Ttarget.z;
+        crossTtarget[0, 2] = Ttarget.y;
+        crossTtarget[1, 0] = Ttarget.z;
+        crossTtarget[1, 2] = -Ttarget.x;
+        crossTtarget[2, 0] = -Ttarget.y;
+        crossTtarget[2, 1] = Ttarget.x;
+
+        var f = 2f / Mathf.Max(eps, Vector3.Dot(tangent, tangent));
+        var targetCrossTangent = -f * crossTtarget * Vector<float>.Build.Dense(new float[] {tangent.x, tangent.y, tangent.z });
+
+        for(int i=0; i<3; i++)
+        {
+            for(int j=0; j<3; j++)
+            {
+                A[3 * bStart + i, 3 * bStart + j] = -f * crossTtarget[i, j];
+                A[3 * bStart + i, 3 * bEnd + j] = f * crossTtarget[i, j];
+                A[3 * bEnd + i, 3 * bStart + j] = f * crossTtarget[i, j];
+                A[3 * bEnd + i, 3 * bEnd + j] = -f * crossTtarget[i, j];
+            }
+
+            b[3 * bStart + i] = targetCrossTangent[i];
+            b[3 * bEnd + i] = -targetCrossTangent[i];
+        }
+
+
+        return (A, b);
     }
 }
