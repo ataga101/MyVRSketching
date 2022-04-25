@@ -16,7 +16,7 @@ public class LineDrawer : MonoBehaviour
 
     //Sampling data
     public float sampleDelta = 0.2f;
-    public float sampleWidth = 0.1f;
+    public float sampleWidth = 2f;
     float elapsedTime;
     List<Vector3> ctrlPoints;
     bool writingNow = false;
@@ -58,24 +58,14 @@ public class LineDrawer : MonoBehaviour
         {
             elapsedTime += Time.deltaTime;
             poseActionR = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
-            Vector3 nowPos, diffvec;
-            float diff;
-            if (!isFirstSample)
-            {
-                nowPos = poseActionR.GetLocalPosition(SteamVR_Input_Sources.RightHand);
-                diffvec = nowPos - ctrlPoints[ctrlPoints.Count - 1];
-                diff = Mathf.Sqrt(Vector3.Dot(diffvec, diffvec));
-            }
+            Vector3 nowPos = poseActionR.GetLocalPosition(SteamVR_Input_Sources.RightHand);
+            Vector3 diffvec = Vector3.zero;
+            float diff = 0;
+            diffvec = nowPos - ctrlPoints[ctrlPoints.Count - 1];
+            diff = Mathf.Sqrt(Vector3.Dot(diffvec, diffvec));
             if(elapsedTime > sampleDelta || ((!isFirstSample) && diff > sampleWidth))
             {
-                if (isFirstSample)
-                {
-                    isFirstSample = false;
-                }
-                else
-                {
-                    ctrlPoints.Add(-(poseActionR.GetVelocity(SteamVR_Input_Sources.RightHand) * sampleDelta / 3) + nowPos);
-                }
+                ctrlPoints.Add(-(poseActionR.GetVelocity(SteamVR_Input_Sources.RightHand) * sampleDelta / 3) + nowPos);
                 ctrlPoints.Add(nowPos);
                 ctrlPoints.Add(poseActionR.GetVelocity(SteamVR_Input_Sources.RightHand) * sampleDelta / 3 + nowPos);
                 Debug.Log("Added a Point");
