@@ -19,9 +19,14 @@ public class ConstraintSolver
 
     public ConstraintSolver(PolyBezier pb, Vector3 ptarget1, Vector3 ptarget2, int targetType)
     {
+        //set parameters
+
         //number of bezier curve
         this.numSegments = pb.numSegments;
+        //number of control points
         this.N = numSegments * 3 + 1;
+
+        //control points
         ControlPoints = new List<Vector3>();
         for(int i=0; i<numSegments; i++)
         {
@@ -34,9 +39,23 @@ public class ConstraintSolver
         this.ptarget1 = ptarget1;
         this.ptarget2 = ptarget2;
         this.targetType = targetType;
+
+        //solve
+        var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
+        var b_tmp = Vector<float>.Build.Dense(3 * N);
+
+        var (A, b) = EfidelityMat(0.5f);
+        A_tmp += A;
+        b_tmp += b;
+
+        (A, b) = EPlainerMat();
+        A_tmp += A;
+        b_tmp += b;
+
+        
     }
 
-    private (Matrix<float>, Vector<float>) EfidelMat(float displacement_normalizer)
+    private (Matrix<float>, Vector<float>) EfidelityMat(float displacement_normalizer)
     {
         float pFactor = 0.5f / N;
         float tFactor = 0.5f / (N - 1);
@@ -221,5 +240,64 @@ public class ConstraintSolver
 
 
         return (A, b);
+    }
+
+    private (Matrix<float>, Vector<float>) c0Mat(int index, Vector3 pos)
+    {
+        var C = Matrix<float>.Build.Dense(3, 3 * N);
+        var b = Vector<float>.Build.Dense(new float[] {pos.x, pos.y, pos.z });
+
+        for(int i=0; i<3; i++)
+        {
+            C[i, 3 * index + i] = 1f;
+        }
+
+        return (C, b);
+
+    }
+
+    private (Matrix<float>, Vector<float>) g1Mat()
+    {
+        var leftTNorms = new List<float>();
+        var rightTNorms = new List<float>();
+        for(int i=0; i<numSegments-1; i++)
+        {
+            var leftT = ControlPoints[i * 3 + 3] - ControlPoints[i * 3 + 2];
+            var rightT = ControlPoints[i * 3 + 4] - ControlPoints[i * 3 + 3];
+            leftTNorms.Add(leftT.magnitude);
+            rightTNorms.Add(rightT.magnitude);
+        }
+
+        var C = Matrix<float>.Build.Dense(3 * (numSegments - 1), 3 * N);
+        var b = Vector<float>.Build.Dense(3 * (numSegments - 1));
+
+        for(int i=0; i<numSegments-1; i++)
+        {
+            if(leftTNorms[i] > eps && rightTNorms[i] > eps)
+            {
+                for(int j=0; j<3; j++)
+                {
+                    C[3 * i + j, 3 * i + j] = - (1 / leftTNorms[i]);
+                    C[3 * i + j, 3 * (i + 1) + j] = (1 / leftTNorms[i]) - (1 / rightTNorms[i]);
+                    C[3 * i + j, 3 * (i + 2) + j] = (1 / rightTNorms[i]);
+                }
+            }         
+        }
+
+        return (C, b);
+    }
+
+    private (Matrix<float>, Vector<float>) selfc0Mat()
+    {
+        var C = Matrix<float>.Build.Dense(3, 3 * N);
+        var d = Vector<float>.Build.Dense(3);
+
+        for(int i=0; i<3; i++)
+        {
+            C[i, i] = 1f;
+            C[i, 3 * (N - 1) + i] = -1;
+        }
+
+        return (C, d);
     }
 }
