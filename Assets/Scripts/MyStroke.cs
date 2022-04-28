@@ -2,24 +2,36 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class MyStroke : MonoBehaviour
+public class MyStroke
 {
     List<Vector3> positions;
     List<Vector3> velocities;
     List<float> times;
     int numSamples;
 
-    float maxDist = 2f;
-    float maxTimeDelta = 0.3f;
+    float maxDistDelta = 0.2f;
+    float maxTimeDelta = 0.2f;
 
     PolyBezier pb;
+
+    GameObject gameObject;
 
     LineRenderer linerenderer;
 
     public MyStroke()
     {
-        linerenderer = gameObject.AddComponent<LineRenderer>();
+        positions = new List<Vector3>();
+        velocities = new List<Vector3>();
+        times = new List<float>();
+
         numSamples = 0;
+        gameObject = new GameObject();
+        linerenderer = gameObject.AddComponent<LineRenderer>();
+        linerenderer.material = new Material(Shader.Find("Sprites/Default"));
+        linerenderer.startWidth = 0.01f;
+        linerenderer.endWidth = 0.01f;
+        linerenderer.startColor = Color.white;
+        linerenderer.endColor = Color.white;
     }
 
     public void addSample(Vector3 position, Vector3 velocity, float time)
@@ -33,17 +45,12 @@ public class MyStroke : MonoBehaviour
         //Set up LineRenderer
         linerenderer = gameObject.GetComponent<LineRenderer>();
 
-        linerenderer.widthMultiplier = 0.1f;
-        linerenderer.startColor = Color.white;
-        linerenderer.endColor = Color.white;
-
         linerenderer.positionCount = numSamples;
-        linerenderer.SetPosition(numSamples - 1, position);
+        linerenderer.SetPositions(positions.ToArray());
     }
 
     public void endSampling()
     {
-        Destroy(linerenderer);
 
         //Convert to PolyBezier -> Show
         convertToPolyBezier();
@@ -58,6 +65,9 @@ public class MyStroke : MonoBehaviour
         Vector3 formerVel = velocities[0];
         float formerTime = times[0];
         cPoints.Add(positions[0]);
+        Debug.Log(numSamples);
+
+        float distDelta = 0f;
 
         for(int i=1; i<numSamples; i++)
         {
@@ -65,18 +75,23 @@ public class MyStroke : MonoBehaviour
             var nowVel = velocities[i];
             var nowTime = times[i];
             var timeDelta = nowTime - formerTime;
-            if(((nowPos - formerPos).magnitude > maxDist) || ((timeDelta) > maxTimeDelta))
+            distDelta += (nowPos - positions[i-1]).magnitude;
+            if (timeDelta > maxTimeDelta || distDelta > maxDistDelta) 
             {
-                cPoints.Add((timeDelta / 3f) * formerVel + formerPos);
-                cPoints.Add(nowPos - (timeDelta / 3f) * nowVel);
+                Debug.Log("Added three points");
+                Debug.Log((timeDelta, distDelta));
+                cPoints.Add((formerVel * timeDelta / 3) + formerPos);
+                cPoints.Add(nowPos - (nowVel * timeDelta / 3));
                 cPoints.Add(nowPos);
+                formerPos = nowPos;
+                formerVel = nowVel;
+                formerTime = nowTime;
+                distDelta = 0f;
             }
-
-            formerPos = nowPos;
-            formerVel = nowVel;
-            formerTime = nowTime;
+;
         }
 
-        pb = new PolyBezier(cPoints);
+        pb = gameObject.AddComponent<PolyBezier>();
+        pb.setControlPoints(cPoints);
     }
 }
