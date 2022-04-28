@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Stroke : MonoBehaviour
+public class MyStroke : MonoBehaviour
 {
     List<Vector3> positions;
     List<Vector3> velocities;
@@ -13,7 +13,7 @@ public class Stroke : MonoBehaviour
 
     LineRenderer linerenderer;
 
-    public Stroke()
+    public MyStroke()
     {
         linerenderer = gameObject.AddComponent<LineRenderer>();
         numSamples = 0;

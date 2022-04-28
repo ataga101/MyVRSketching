@@ -9,7 +9,7 @@ public class Bezier
     public bool Rendered;
     GameObject gameObject;
 
-    public int numSegment = 100;
+    public int numSegment = 20;
 
 
     public Bezier(List<Vector3> P)

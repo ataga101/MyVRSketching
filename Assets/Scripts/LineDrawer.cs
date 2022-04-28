@@ -5,9 +5,9 @@ using Valve.VR;
 
 public class LineDrawer : MonoBehaviour
 {
-    //Strokes
-    public List<Stroke> strokes;
-    Stroke nowStroke = null;
+    //MyStrokes
+    public List<MyStroke> MyStrokes;
+    MyStroke nowMyStroke = null;
 
     //Controller triggers
     private SteamVR_Action_Pose pose;
@@ -18,7 +18,7 @@ public class LineDrawer : MonoBehaviour
 
     void Start()
     {
-        strokes = new List<Stroke>();
+        MyStrokes = new List<MyStroke>();
     }
 
     // Update is called once per frame
@@ -30,30 +30,30 @@ public class LineDrawer : MonoBehaviour
             pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
             writingNow = true;
 
-            if(nowStroke != null)
+            if(nowMyStroke != null)
             {
-                strokes.Add(nowStroke);
+                MyStrokes.Add(nowMyStroke);
             }
 
-            nowStroke = new Stroke();
-            nowStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
+            nowMyStroke = new MyStroke();
+            nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
                 Time.time);
 
-            Debug.Log("Started Stroke Sketching");
+            Debug.Log("Started MyStroke Sketching");
         }
         else if(interactui && writingNow)
         {
             pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
-            nowStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
+            nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
                 Time.time);
         }
         else if(!interactui && writingNow)
         {
             writingNow = false;
-            nowStroke.endSampling();
-            Debug.Log("Ended Stroke Sketching");
+            nowMyStroke.endSampling();
+            Debug.Log("Ended MyStroke Sketching");
         }
     }
 }
