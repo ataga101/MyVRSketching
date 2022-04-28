@@ -54,4 +54,15 @@ public class Bezier
             lineRenderer.SetPositions(Points.ToArray());
         }
     }
+
+    public (float, float) getNearestT(Vector3 pos)
+    {
+        for(int i=0; i<numSegment; i++)
+        {
+           
+        }
+
+        return (0f, 0f);
+    }
+
 }

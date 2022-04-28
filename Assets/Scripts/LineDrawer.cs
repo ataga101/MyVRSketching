@@ -30,11 +30,6 @@ public class LineDrawer : MonoBehaviour
             pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
             writingNow = true;
 
-            if(nowMyStroke != null)
-            {
-                MyStrokes.Add(nowMyStroke);
-            }
-
             nowMyStroke = new MyStroke();
             nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
@@ -53,6 +48,7 @@ public class LineDrawer : MonoBehaviour
         {
             writingNow = false;
             nowMyStroke.endSampling();
+            MyStrokes.Add(nowMyStroke);
             Debug.Log("Ended MyStroke Sketching");
         }
     }

@@ -9,6 +9,9 @@ public class MyStroke : MonoBehaviour
     List<float> times;
     int numSamples;
 
+    float maxDist = 2f;
+    float maxTimeDelta = 0.3f;
+
     PolyBezier pb;
 
     LineRenderer linerenderer;
@@ -41,10 +44,39 @@ public class MyStroke : MonoBehaviour
     public void endSampling()
     {
         Destroy(linerenderer);
+
+        //Convert to PolyBezier -> Show
+        convertToPolyBezier();
+        pb.Render();
     }
 
     public void convertToPolyBezier()
     {
+        var cPoints = new List<Vector3>();
 
+        Vector3 formerPos = positions[0];
+        Vector3 formerVel = velocities[0];
+        float formerTime = times[0];
+        cPoints.Add(positions[0]);
+
+        for(int i=1; i<numSamples; i++)
+        {
+            var nowPos = positions[i];
+            var nowVel = velocities[i];
+            var nowTime = times[i];
+            var timeDelta = nowTime - formerTime;
+            if(((nowPos - formerPos).magnitude > maxDist) || ((timeDelta) > maxTimeDelta))
+            {
+                cPoints.Add((timeDelta / 3f) * formerVel + formerPos);
+                cPoints.Add(nowPos - (timeDelta / 3f) * nowVel);
+                cPoints.Add(nowPos);
+            }
+
+            formerPos = nowPos;
+            formerVel = nowVel;
+            formerTime = nowTime;
+        }
+
+        pb = new PolyBezier(cPoints);
     }
 }
