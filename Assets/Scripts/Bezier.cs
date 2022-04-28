@@ -8,7 +8,11 @@ public class Bezier : MonoBehaviour
 
     public bool Rendered;
 
-    public int numSegment = 50;
+    //Number of segments
+    public int numSegment = 20;
+
+    //Number of colliders
+    public int numColliders = 5;
 
 
     public void Awake()
@@ -47,14 +51,29 @@ public class Bezier : MonoBehaviour
         return Points;
     }
 
-    public (float, float) getNearestT(Vector3 pos)
+    public (Vector3, float) getNearestPosandDist(Vector3 pos)
     {
+        float dist = 10e6f;
+        float t = 0f;
+
         for(int i=0; i<numSegment; i++)
         {
-           
+            var nowt = i / numSegment;
+            Vector3 point = GetPoint(t);
+            var nowDist = Mathf.Sqrt(Vector3.Dot(point - pos, point - pos));
+            if(nowDist < dist)
+            {
+                dist = nowDist;
+                t = nowt;
+            }
         }
 
-        return (0f, 0f);
+        return (GetPoint(t), dist);
+    }
+
+    public void SetCollisions()
+    {
+
     }
 
 }

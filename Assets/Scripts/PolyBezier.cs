@@ -37,4 +37,21 @@ public class PolyBezier : MonoBehaviour
         lineRenderer.SetPositions(Points.ToArray());
         Debug.Log("Rendered");
     }
+
+    public Vector3 GetNearestPointTo(Vector3 pos)
+    {
+        float dist = 10e6f;
+        Vector3 ret = Vector3.zero;
+        foreach(Bezier b in beziers)
+        {
+            var (point, nowdist) = b.getNearestPosandDist(pos);
+            if(nowdist < dist)
+            {
+                dist = nowdist;
+                ret = point;
+            }
+        }
+
+        return ret;
+    }
 }

@@ -88,7 +88,7 @@ public class MyStroke
                 formerTime = nowTime;
                 distDelta = 0f;
             }
-;
+
         }
 
         pb = gameObject.AddComponent<PolyBezier>();
