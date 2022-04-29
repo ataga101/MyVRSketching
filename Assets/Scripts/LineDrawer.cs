@@ -8,6 +8,7 @@ public class LineDrawer : MonoBehaviour
     //MyStrokes
     public List<MyStroke> MyStrokes;
     MyStroke nowMyStroke = null;
+    int StrokeIdx = 0;
 
     //Controller triggers
     private SteamVR_Action_Pose pose;
@@ -32,7 +33,10 @@ public class LineDrawer : MonoBehaviour
             writingNow = true;
             Debug.Log("Started MyStroke Sketching");
 
-            nowMyStroke = new MyStroke();
+            //Create a new stroke
+            nowMyStroke = new MyStroke(StrokeIdx);
+            StrokeIdx++;
+            //Add a sample
             nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
                 Time.time);
@@ -41,12 +45,9 @@ public class LineDrawer : MonoBehaviour
         else if(interactui && writingNow)
         {
             pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
-            var nowPos = pose.GetLocalPosition(SteamVR_Input_Sources.RightHand);
-            var nowVel = pose.GetVelocity(SteamVR_Input_Sources.RightHand);
-            var nowtime = Time.time;
-            nowMyStroke.addSample(nowPos,
-                nowVel,
-               nowtime);
+            nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
+                pose.GetVelocity(SteamVR_Input_Sources.RightHand),
+                Time.time);
         }
         else if(!interactui && writingNow)
         {

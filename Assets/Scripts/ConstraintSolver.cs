@@ -17,7 +17,7 @@ public class ConstraintSolver
 
     float eps = 10e-6f;
 
-    public ConstraintSolver(PolyBezier pb, Vector3 ptarget1, Vector3 ptarget2, int targetType)
+    public ConstraintSolver(PolyBezier pb, List<(int, Vector3)> c0Constraints, List<(int, Vector3)> tangentConstraints)
     {
         //set parameters
 
@@ -28,7 +28,7 @@ public class ConstraintSolver
 
         //control points
         ControlPoints = new List<Vector3>();
-        for(int i=0; i<numSegments; i++)
+        for (int i = 0; i < numSegments; i++)
         {
             ControlPoints.Add(pb.beziers[i].P0);
             ControlPoints.Add(pb.beziers[i].P1);
@@ -36,15 +36,12 @@ public class ConstraintSolver
         }
         ControlPoints.Add(pb.beziers[numSegments - 1].P3);
         this.pb = pb;
-        this.ptarget1 = ptarget1;
-        this.ptarget2 = ptarget2;
-        this.targetType = targetType;
 
         //solve
         var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
         var b_tmp = Vector<float>.Build.Dense(3 * N);
 
-        var (A, b) = EfidelityMat(0.5f);
+        var (A, b) = EfidelityMat();
         A_tmp += A;
         b_tmp += b;
 
@@ -52,10 +49,59 @@ public class ConstraintSolver
         A_tmp += A;
         b_tmp += b;
 
-        
+        foreach ((int idx, Vector3 pos) in tangentConstraints)
+        {
+            (A, b) = EtangentMat(pos, idx);
+            A_tmp += A;
+            b_tmp += b;
+        }
+
+        bool hasg1Constraint = (N > 4);
+        bool isSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
+
+        int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
+        int selfConstraintCount = (isSelfConstraint) ? 1 : 0;
+
+        int numConstraints = c0Constraints.Count + g1ConstraintCount + selfConstraintCount;
+
+        var C_tmp = new Matrix<float>[numConstraints, 0];
+        var b_tmp2 = new List<float>();
+
+        for (int i = 0; i < c0Constraints.Count; i++)
+        {
+            var (idx, pos) = c0Constraints[i];
+            Vector<float> b_ret;
+            (C_tmp[i, 0], b_ret) = c0Mat(idx, pos);
+            b_tmp2.AddRange(b_ret.Enumerate());
+        }
+
+        if(hasg1Constraint)
+        {
+            Vector<float> b_ret;
+            (C_tmp[c0Constraints.Count, 0], b_ret) = g1Mat();
+            b_tmp2.AddRange(b_ret.Enumerate());
+        }
+
+        if (isSelfConstraint)
+        {
+            Vector<float> b_ret;
+            (C_tmp[c0Constraints.Count + g1ConstraintCount, 0], b_ret) = selfc0Mat();
+            b_tmp2.AddRange(b_ret.Enumerate());
+        }
+
+        var M_tmp = new Matrix<float>[2, 2];
+        var b_tmp_final = new Vector<float>[2];
+
+        var C = Matrix<float>.Build.DenseOfMatrixArray(C_tmp);
+        var b_tmp2_concatinated = Vector<float>.Build.DenseOfEnumerable(b_tmp2);
+
+        M_tmp[0, 0] = A_tmp;
+        M_tmp[1, 0] = C;
+        M_tmp[0, 1] = C.Transpose();
+        M_tmp[1, 1] = Matrix<float>.Build.Dense(C.RowCount, C.RowCount);
     }
 
-    private (Matrix<float>, Vector<float>) EfidelityMat(float displacement_normalizer)
+    private (Matrix<float>, Vector<float>) EfidelityMat(float displacement_normalizer=0.04f)
     {
         float pFactor = 0.5f / N;
         float tFactor = 0.5f / (N - 1);

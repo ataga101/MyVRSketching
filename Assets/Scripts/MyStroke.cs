@@ -18,14 +18,20 @@ public class MyStroke
 
     LineRenderer linerenderer;
 
-    public MyStroke()
+    Mesh mesh;
+    MeshCollider meshCollider;    
+
+    public MyStroke(int index)
     {
         positions = new List<Vector3>();
         velocities = new List<Vector3>();
         times = new List<float>();
 
         numSamples = 0;
+        
         gameObject = new GameObject();
+        gameObject.name = "Stroke" + index.ToString();
+
         linerenderer = gameObject.AddComponent<LineRenderer>();
         linerenderer.material = new Material(Shader.Find("Sprites/Default"));
         linerenderer.startWidth = 0.01f;
@@ -88,10 +94,16 @@ public class MyStroke
                 formerTime = nowTime;
                 distDelta = 0f;
             }
-
         }
 
         pb = gameObject.AddComponent<PolyBezier>();
         pb.setControlPoints(cPoints);
+    }
+
+    public void SetCollision()
+    {
+        meshCollider = gameObject.AddComponent<MeshCollider>();
+        linerenderer.BakeMesh(mesh, true);
+        meshCollider.sharedMesh = mesh;
     }
 }
