@@ -21,6 +21,6 @@ public class InkSphere : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         Debug.Log(collision.gameObject.transform.parent.gameObject.name);
-        Debug.Log(collision.GetContact(0));
+        Debug.Log(collision.GetContact(0).point);
     }
 }
