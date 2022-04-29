@@ -17,4 +17,10 @@ public class InkSphere : MonoBehaviour
         var pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
         transform.position = pose.GetLocalPosition(SteamVR_Input_Sources.RightHand);
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log(collision.gameObject.transform.parent.gameObject.name);
+        Debug.Log(collision.GetContact(0));
+    }
 }

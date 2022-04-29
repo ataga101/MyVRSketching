@@ -11,9 +11,8 @@ public class Bezier : MonoBehaviour
     //Number of segments
     public int numSegment = 20;
 
-    //Number of colliders
-    public int numColliders = 5;
-
+    //Number of collision segments
+    public int numCollisionSegment = 5;
 
     public void Awake()
     {
@@ -58,7 +57,7 @@ public class Bezier : MonoBehaviour
 
         for(int i=0; i<numSegment; i++)
         {
-            var nowt = i / numSegment;
+            float nowt = i / (float)numSegment;
             Vector3 point = GetPoint(t);
             var nowDist = Mathf.Sqrt(Vector3.Dot(point - pos, point - pos));
             if(nowDist < dist)
@@ -71,9 +70,27 @@ public class Bezier : MonoBehaviour
         return (GetPoint(t), dist);
     }
 
-    public void SetCollisions()
+    public void SetCollision()
     {
+        for(int i=0; i<numCollisionSegment-1; i++)
+        {
+            GameObject capusuleObject = new GameObject();
+            capusuleObject.name = "CapusuleObject";
+            capusuleObject.transform.SetParent(this.gameObject.transform);
+            var col = capusuleObject.AddComponent<CapsuleCollider>();
 
+            var pos1 = GetPoint(i / (float)numCollisionSegment);
+            var pos2 = GetPoint((i + 1) / (float)numCollisionSegment);
+            //Debug.Log((pos1 , pos2));
+
+            col.center = Vector3.zero;
+            col.direction = 2;
+            col.radius = 0.005f;
+
+            col.transform.position = (pos1 + pos2) / 2;
+            col.transform.LookAt(pos1);
+            col.height = Mathf.Sqrt(Vector3.Dot((pos1 - pos2), (pos1 - pos2)));
+        }
     }
 
 }

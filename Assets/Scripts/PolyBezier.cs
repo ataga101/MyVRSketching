@@ -10,7 +10,7 @@ public class PolyBezier : MonoBehaviour
     public void setControlPoints(List<Vector3> points)
     {
         numSegments = points.Count;
-        Debug.Log(numSegments);
+        //Debug.Log(numSegments);
         for(int i=0; i<points.Count-1; i+=3)
         {
             var nowPoints = points.GetRange(i, 4);
@@ -35,7 +35,6 @@ public class PolyBezier : MonoBehaviour
         }
         lineRenderer.positionCount = Points.Count;
         lineRenderer.SetPositions(Points.ToArray());
-        Debug.Log("Rendered");
     }
 
     public Vector3 GetNearestPointTo(Vector3 pos)
@@ -53,5 +52,14 @@ public class PolyBezier : MonoBehaviour
         }
 
         return ret;
+    }
+
+    public void SetCollision()
+    {
+        foreach(var b in beziers)
+        {
+            //Debug.Log("Start setting collider");
+            b.SetCollision();
+        }
     }
 }

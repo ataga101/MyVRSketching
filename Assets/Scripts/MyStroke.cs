@@ -18,6 +18,7 @@ public class MyStroke
 
     LineRenderer linerenderer;
 
+    GameObject colliderObject;
     Mesh mesh;
     MeshCollider meshCollider;    
 
@@ -71,7 +72,7 @@ public class MyStroke
         Vector3 formerVel = velocities[0];
         float formerTime = times[0];
         cPoints.Add(positions[0]);
-        Debug.Log(numSamples);
+        //Debug.Log(numSamples);
 
         float distDelta = 0f;
 
@@ -84,8 +85,8 @@ public class MyStroke
             distDelta += (nowPos - positions[i-1]).magnitude;
             if (timeDelta > maxTimeDelta || distDelta > maxDistDelta) 
             {
-                Debug.Log("Added three points");
-                Debug.Log((timeDelta, distDelta));
+                //Debug.Log("Added three points");
+                //Debug.Log((timeDelta, distDelta));
                 cPoints.Add((formerVel * timeDelta / 3) + formerPos);
                 cPoints.Add(nowPos - (nowVel * timeDelta / 3));
                 cPoints.Add(nowPos);
@@ -102,8 +103,22 @@ public class MyStroke
 
     public void SetCollision()
     {
-        meshCollider = gameObject.AddComponent<MeshCollider>();
-        linerenderer.BakeMesh(mesh, true);
+        /*
+        colliderObject = new GameObject("colliderObject");
+        colliderObject.transform.SetParent(gameObject.transform);
+        meshCollider = colliderObject.AddComponent<MeshCollider>();
+
+        mesh = new Mesh();
+        var camObject = GameObject.FindGameObjectWithTag("MainCamera");
+        var cam = camObject.GetComponent<Camera>();
+        linerenderer = gameObject.GetComponent<LineRenderer>();
+        linerenderer.BakeMesh(mesh, false);
+        Debug.Log("Done");
         meshCollider.sharedMesh = mesh;
+        */
+
+        pb.SetCollision();
+
+
     }
 }
