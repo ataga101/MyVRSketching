@@ -90,15 +90,36 @@ public class ConstraintSolver
         }
 
         var M_tmp = new Matrix<float>[2, 2];
-        var b_tmp_final = new Vector<float>[2];
 
         var C = Matrix<float>.Build.DenseOfMatrixArray(C_tmp);
-        var b_tmp2_concatinated = Vector<float>.Build.DenseOfEnumerable(b_tmp2);
+        List<float> b_tmp_enu = new List<float> (b_tmp.Enumerate());
+        b_tmp_enu.AddRange(b_tmp2);
+        var b_final = Vector<float>.Build.DenseOfEnumerable(b_tmp_enu);
 
         M_tmp[0, 0] = A_tmp;
         M_tmp[1, 0] = C;
         M_tmp[0, 1] = C.Transpose();
         M_tmp[1, 1] = Matrix<float>.Build.Dense(C.RowCount, C.RowCount);
+
+        var M = Matrix<float>.Build.DenseOfMatrixArray(M_tmp);
+
+        //Solve Constraint
+        var ansList = new List<float>(M.Solve(b_final).Enumerate());
+
+        //Retrieve answer
+        var newControlPoints = new List<Vector3>();
+        for(int i=0; i<N; i++)
+        {
+            Vector3 point = Vector3.zero;
+            point.x = ansList[3 * N];
+            point.y = ansList[3 * N + 1];
+            point.z = ansList[3 * N + 2];
+            newControlPoints.Add(point);
+        }
+
+        //Compute Loss
+
+        
     }
 
     private (Matrix<float>, Vector<float>) EfidelityMat(float displacement_normalizer=0.04f)
