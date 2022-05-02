@@ -12,15 +12,11 @@ public class MyStroke
     float maxDistDelta = 0.2f;
     float maxTimeDelta = 0.2f;
 
-    PolyBezier pb;
+    public PolyBezier pb { get; set; }
 
-    GameObject gameObject;
+    public GameObject gameObject;
 
-    LineRenderer linerenderer;
-
-    GameObject colliderObject;
-    Mesh mesh;
-    MeshCollider meshCollider;    
+    LineRenderer linerenderer;  
 
     public MyStroke(int index)
     {
@@ -58,9 +54,16 @@ public class MyStroke
 
     public void endSampling()
     {
-
-        //Convert to PolyBezier -> Show
+        //Convert to PolyBezier
         convertToPolyBezier();
+    }
+
+    public ConstraintSolver cs;
+
+    public void FitAndShow(List<CollisionData> collisionData)
+    {
+        cs = new ConstraintSolver(pb, collisionData, times);
+        pb = cs.solve();
         pb.Render();
     }
 
@@ -103,22 +106,6 @@ public class MyStroke
 
     public void SetCollision()
     {
-        /*
-        colliderObject = new GameObject("colliderObject");
-        colliderObject.transform.SetParent(gameObject.transform);
-        meshCollider = colliderObject.AddComponent<MeshCollider>();
-
-        mesh = new Mesh();
-        var camObject = GameObject.FindGameObjectWithTag("MainCamera");
-        var cam = camObject.GetComponent<Camera>();
-        linerenderer = gameObject.GetComponent<LineRenderer>();
-        linerenderer.BakeMesh(mesh, false);
-        Debug.Log("Done");
-        meshCollider.sharedMesh = mesh;
-        */
-
         pb.SetCollision();
-
-
     }
 }

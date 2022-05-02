@@ -6,9 +6,11 @@ public class PolyBezier : MonoBehaviour
 {
     public List<Bezier> beziers = new List<Bezier> () { };
     public int numSegments = 0;
+    public List<Vector3> controlPoints;
 
     public void setControlPoints(List<Vector3> points)
     {
+        controlPoints = points;
         numSegments = points.Count;
         //Debug.Log(numSegments);
         for(int i=0; i<points.Count-1; i+=3)
@@ -37,22 +39,59 @@ public class PolyBezier : MonoBehaviour
         lineRenderer.SetPositions(Points.ToArray());
     }
 
-    public Vector3 GetNearestPointTo(Vector3 pos)
+    //Split bezier and return control point index
+    public int SplitNear(Vector3 pos)
+    { 
+        var (bestPos, bestIdx, bestT) = getNearestPosAndIdxAndT(pos);
+        var bestBezier = beziers[bestIdx];
+        var (L1, L2) = bestBezier.Split(bestT);
+
+        //Update Beziers
+        var newBezier1 = gameObject.AddComponent<Bezier>();
+        var newBezier2 = gameObject.AddComponent<Bezier>();
+        newBezier1.SetPoint(L1);
+        newBezier2.SetPoint(L2);
+
+        Destroy(beziers[bestIdx]);
+        beziers.RemoveAt(bestIdx);
+
+        beziers.Insert(bestIdx, newBezier2);
+        beziers.Insert(bestIdx, newBezier1);
+
+        //Update control points
+        var pointsToInsert = new List<Vector3>() { L1[1], L1[2], L1[3], L2[2], L2[3] };
+        controlPoints.RemoveRange(bestIdx * 3 + 1, bestIdx * 3 + 3);
+        controlPoints.InsertRange(bestIdx * 3 + 1, pointsToInsert);
+
+        this.Render();
+
+        return bestIdx * 3 + 3;
+    }
+
+    public (Vector3, int, float) getNearestPosAndIdxAndT(Vector3 pos)
     {
-        float dist = 10e6f;
-        Vector3 ret = Vector3.zero;
-        foreach(Bezier b in beziers)
+        int bestBezierIdx = 0;
+        float minDist = 10e6f;
+        Vector3 bestPos = Vector3.zero;
+        float bestT = 0f;
+
+        for(int i=0; i<numSegments; i++)
         {
-            var (point, nowdist) = b.getNearestPosandDist(pos);
-            if(nowdist < dist)
+            Bezier b = beziers[i];
+            (Vector3 nowPos, float nowdist, float nowT) = b.getNearestPosAndDistAndT(pos);
+            if (nowdist < minDist)
             {
-                dist = nowdist;
-                ret = point;
+                minDist = nowdist;
+                bestPos = nowPos;
+                bestT = nowT;
+                bestBezierIdx = i;
             }
         }
 
-        return ret;
+        return (bestPos, bestBezierIdx, bestT);
     }
+
+
 
     public void SetCollision()
     {
@@ -62,4 +101,5 @@ public class PolyBezier : MonoBehaviour
             b.SetCollision();
         }
     }
+
 }

@@ -9,6 +9,7 @@ public class LineDrawer : MonoBehaviour
     public List<MyStroke> MyStrokes;
     MyStroke nowMyStroke = null;
     int StrokeIdx = 0;
+    private Dictionary<string, int> strokeNameToIdx = new Dictionary<string, int>();
 
     //Controller triggers
     private SteamVR_Action_Pose pose;
@@ -16,6 +17,8 @@ public class LineDrawer : MonoBehaviour
     private bool interactui;
 
     bool writingNow = false;
+
+    List<CollisionData> cdList = new List<CollisionData>();
 
     void Start()
     {
@@ -35,6 +38,7 @@ public class LineDrawer : MonoBehaviour
 
             //Create a new stroke
             nowMyStroke = new MyStroke(StrokeIdx);
+            strokeNameToIdx[nowMyStroke.gameObject.name] = StrokeIdx;
             StrokeIdx++;
             //Add a sample
             nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
@@ -56,12 +60,45 @@ public class LineDrawer : MonoBehaviour
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
                 Time.time);
             nowMyStroke.endSampling();
+            nowMyStroke.FitAndShow(cdList);
+            cdList = new List<CollisionData>();
+
             //Debug.Log("Rendered");
             nowMyStroke.SetCollision();
             //Debug.Log("Set collider");
             MyStrokes.Add(nowMyStroke);
             //Debug.Log("Ended MyStroke Sketching");
         }
+    }
+
+    public void AddCollisionData(string strokeName, float collisionTime, Vector3 collisionPos)
+    {
+        int strokeIdx = strokeNameToIdx[strokeName];
+
+        //Collision point -> Point on bezier curve
+        MyStroke stroke = MyStrokes[StrokeIdx];
+        var (pos, idx, T) = stroke.pb.getNearestPosAndIdxAndT(collisionPos);
+
+        var cd = new CollisionData(strokeNameToIdx[strokeName], collisionTime, pos);
+        if(interactui || writingNow)
+        {
+            cdList.Add(cd);
+        }
+    }
+}
+
+
+public class CollisionData
+{
+    public int strokeId;
+    public float collisionTime;
+    public Vector3 collisionPos;
+
+    public CollisionData(int StrokeId, float CollisionTime, Vector3 CollisionPos)
+    {
+        strokeId = StrokeId;
+        collisionTime = CollisionTime;
+        collisionPos = CollisionPos;
     }
 }
 

@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using Valve.VR;
 
+
 public class InkSphere : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    GameObject lineDrawerObject;
+    LineDrawer lineDrawer;
+
+    private void Awake()
     {
-        
+        lineDrawerObject = GameObject.FindGameObjectWithTag("LineDrawer");
+        lineDrawer = lineDrawerObject.GetComponent<LineDrawer>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void LateUpdate()
     {
         var pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
         transform.position = pose.GetLocalPosition(SteamVR_Input_Sources.RightHand);
@@ -20,7 +23,9 @@ public class InkSphere : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        Debug.Log(collision.gameObject.transform.parent.gameObject.name);
-        Debug.Log(collision.GetContact(0).point);
+        lineDrawer.AddCollisionData(
+                collision.gameObject.transform.parent.gameObject.name,
+                Time.time,
+                collision.GetContact(0).point);
     }
 }

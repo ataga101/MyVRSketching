@@ -10,17 +10,22 @@ public class ConstraintSolver
 
     PolyBezier pb;
     List<Vector3> ControlPoints;
-    Vector3 ptarget1;
-    Vector3 ptarget2;
-    int targetType;
+
+    PolyBezier newPb;
+    List<Vector3> newControlPoints;
+
     float[] tNorms;
 
+    List<(int, Vector3)> c0Constraints;
+    List<(int, Vector3)> tangentConstraints;
+
     float eps = 10e-6f;
+    float displacement_normalizer = 0.04f;
 
-    public ConstraintSolver(PolyBezier pb, List<(int, Vector3)> c0Constraints, List<(int, Vector3)> tangentConstraints)
+    ConstraintGenerator constraintGenerator;
+
+    public ConstraintSolver(PolyBezier pb, List<CollisionData> collisionData, List<float> sampledTimes)
     {
-        //set parameters
-
         //number of bezier curve
         this.numSegments = pb.numSegments;
         //number of control points
@@ -37,6 +42,56 @@ public class ConstraintSolver
         ControlPoints.Add(pb.beziers[numSegments - 1].P3);
         this.pb = pb;
 
+        constraintGenerator = new ConstraintGenerator(pb, collisionData, sampledTimes);
+    }
+
+    public PolyBezier solve()
+    {
+        var disabledMap = new List<bool>();
+        var removedMap = new List<bool>();
+        var bestMap = new List<bool>();
+        for(int i=0; i<constraintGenerator.candidateNum; i++)
+        {
+            disabledMap.Add(false);
+            removedMap.Add(false);
+            bestMap.Add(false);
+        }
+
+        PolyBezier bestPb = pb;
+        float minEnergy = 10e8f;
+        bool noPointRemoved = false;
+
+        while (!noPointRemoved)
+        {
+            noPointRemoved = true;
+            for(int i=0; i<constraintGenerator.candidateNum; i++)
+            {
+                if (removedMap[i])
+                {
+                    continue;
+                }
+                disabledMap = removedMap;
+                disabledMap[i] = true;
+                
+                (pb, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
+                solveSingle();
+                float energy = computeEfidelity();
+
+                if (energy < minEnergy)
+                {
+                    noPointRemoved = false;
+                    bestMap = disabledMap;
+                    bestPb = newPb;
+                    minEnergy = energy;
+                }
+            }
+            removedMap = bestMap;
+        }
+        
+        return bestPb;
+    }
+
+    public void solveSingle() { 
         //solve
         var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
         var b_tmp = Vector<float>.Build.Dense(3 * N);
@@ -107,7 +162,7 @@ public class ConstraintSolver
         var ansList = new List<float>(M.Solve(b_final).Enumerate());
 
         //Retrieve answer
-        var newControlPoints = new List<Vector3>();
+        newControlPoints = new List<Vector3>();
         for(int i=0; i<N; i++)
         {
             Vector3 point = Vector3.zero;
@@ -117,14 +172,31 @@ public class ConstraintSolver
             newControlPoints.Add(point);
         }
 
-        //Compute Loss
-
-        
+        newPb = new PolyBezier();
+        newPb.setControlPoints(newControlPoints);
     }
 
-    private (Matrix<float>, Vector<float>) EfidelityMat(float displacement_normalizer=0.04f)
+    private float computeEfidelity()
     {
-        float pFactor = 0.5f / N;
+        float ret = 0.0f;
+        float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
+        float tFactor = 0.5f / (N - 1);
+        Debug.Assert(pb.numSegments == newPb.numSegments);
+        for(int i=0; i<pb.numSegments; i++)
+        {
+            var tmpvec = newPb.controlPoints[i] - pb.controlPoints[i];
+            ret += Vector3.Dot(tmpvec, tmpvec) * pFactor;
+            if (i < pb.numSegments - 1){
+                tmpvec = (newPb.controlPoints[i + 1] - newPb.controlPoints[i]) - (pb.controlPoints[i + 1] - pb.controlPoints[i]);
+                ret += Vector3.Dot(tmpvec, tmpvec) * tFactor / tNorms[i];
+            }
+        }
+        return ret;
+    }
+
+    private (Matrix<float>, Vector<float>) EfidelityMat()
+    {
+        float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
         float tFactor = 0.5f / (N - 1);
 
         tNorms = new float[N-1];
@@ -135,7 +207,6 @@ public class ConstraintSolver
             tNorms[i] = Vector3.Dot(Tangent, Tangent);
         }
 
-        pFactor /= (displacement_normalizer * displacement_normalizer);
 
         Matrix<float> A = Matrix<float>.Build.Dense(3 * N, 3 * N);
         for(int i=0; i<N; i++)

@@ -50,7 +50,7 @@ public class Bezier : MonoBehaviour
         return Points;
     }
 
-    public (Vector3, float) getNearestPosandDist(Vector3 pos)
+    public (Vector3, float, float) getNearestPosAndDistAndT(Vector3 pos)
     {
         float dist = 10e6f;
         float t = 0f;
@@ -67,7 +67,7 @@ public class Bezier : MonoBehaviour
             }
         }
 
-        return (GetPoint(t), dist);
+        return (GetPoint(t), dist, t);
     }
 
     public void SetCollision()
@@ -91,6 +91,23 @@ public class Bezier : MonoBehaviour
             col.transform.LookAt(pos1);
             col.height = Mathf.Sqrt(Vector3.Dot((pos1 - pos2), (pos1 - pos2)));
         }
+    }
+
+    public (List<Vector3>, List<Vector3>) Split(float t)
+    {
+        var a = Vector3.Lerp(P0, P1, t);
+        var b = Vector3.Lerp(P1, P2, t);
+        var c = Vector3.Lerp(P2, P3, t);
+
+        var d = Vector3.Lerp(a, b, t);
+        var e = Vector3.Lerp(b, c, t);
+
+        var p = Vector3.Lerp(d, e, t);
+
+        var b1List = new List<Vector3>() { P0, a, d, p };
+        var b2List = new List<Vector3>() { p, e, c, P1 };
+
+        return (b1List, b2List);
     }
 
 }
