@@ -62,8 +62,11 @@ public class MyStroke
 
     public void FitAndShow(List<CollisionData> collisionData)
     {
+        Debug.Log("Start Constraint Solving");
         cs = new ConstraintSolver(pb, collisionData, times);
+        Debug.Log("Constraint Generated");
         pb = cs.solve();
+        Debug.Log("Constraint Solved");
         pb.Render();
     }
 

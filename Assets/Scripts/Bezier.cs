@@ -72,7 +72,7 @@ public class Bezier : MonoBehaviour
 
     public void SetCollision()
     {
-        for(int i=0; i<numCollisionSegment-1; i++)
+        for(int i=0; i<numCollisionSegment; i++)
         {
             GameObject capusuleObject = new GameObject();
             capusuleObject.name = "CapusuleObject";

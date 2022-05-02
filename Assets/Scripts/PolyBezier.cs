@@ -11,7 +11,6 @@ public class PolyBezier : MonoBehaviour
     public void setControlPoints(List<Vector3> points)
     {
         controlPoints = points;
-        numSegments = points.Count;
         //Debug.Log(numSegments);
         for(int i=0; i<points.Count-1; i+=3)
         {
@@ -20,6 +19,7 @@ public class PolyBezier : MonoBehaviour
             bezier.SetPoint(nowPoints);
             beziers.Add(bezier);
         }
+        numSegments = beziers.Count;
     }
 
     public void Render()
@@ -75,6 +75,7 @@ public class PolyBezier : MonoBehaviour
 
         for(int i=0; i<numSegments; i++)
         {
+            //Debug.Log("FUGA");
             Bezier b = beziers[i];
             (Vector3 nowPos, float nowdist, float nowT) = b.getNearestPosAndDistAndT(pos);
             if (nowdist < minDist)

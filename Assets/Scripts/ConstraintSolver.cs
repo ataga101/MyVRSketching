@@ -33,13 +33,14 @@ public class ConstraintSolver
 
         //control points
         ControlPoints = new List<Vector3>();
-        for (int i = 0; i < numSegments; i++)
+        for (int i = 0; i < pb.beziers.Count; i++)
         {
             ControlPoints.Add(pb.beziers[i].P0);
             ControlPoints.Add(pb.beziers[i].P1);
             ControlPoints.Add(pb.beziers[i].P2);
         }
-        ControlPoints.Add(pb.beziers[numSegments - 1].P3);
+        ControlPoints.Add(pb.beziers[pb.beziers.Count - 1].P3);
+
         this.pb = pb;
 
         constraintGenerator = new ConstraintGenerator(pb, collisionData, sampledTimes);
@@ -57,15 +58,25 @@ public class ConstraintSolver
             bestMap.Add(false);
         }
 
-        PolyBezier bestPb = pb;
-        float minEnergy = 10e8f;
+        PolyBezier bestPb;
+        float minEnergy;
         bool noPointRemoved = false;
+
+        Debug.Log("HOGE1");
+        (bestPb, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
+                Debug.Log("HOGE2");
+        solveSingle();
+                Debug.Log("HOGE3");
+        minEnergy = computeEfidelity();
+        Debug.Log("HOGE4");
 
         while (!noPointRemoved)
         {
             noPointRemoved = true;
             for(int i=0; i<constraintGenerator.candidateNum; i++)
             {
+                Debug.Log("HOGE");
+                Debug.Log(i);
                 if (removedMap[i])
                 {
                     continue;
@@ -91,19 +102,28 @@ public class ConstraintSolver
         return bestPb;
     }
 
+    private float computeEConnectivity(List<bool> disabledMap)
+    {
+        float ret = 0f;
+        return ret;
+    }
+
     public void solveSingle() { 
         //solve
         var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
         var b_tmp = Vector<float>.Build.Dense(3 * N);
 
+        Debug.Log("FUGA");
         var (A, b) = EfidelityMat();
         A_tmp += A;
         b_tmp += b;
 
+        Debug.Log("FUGA1");
         (A, b) = EPlainerMat();
         A_tmp += A;
         b_tmp += b;
 
+        Debug.Log("FUGA2");
         foreach ((int idx, Vector3 pos) in tangentConstraints)
         {
             (A, b) = EtangentMat(pos, idx);
@@ -111,17 +131,21 @@ public class ConstraintSolver
             b_tmp += b;
         }
 
+        Debug.Log("FUGA3");
         bool hasg1Constraint = (N > 4);
         bool isSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
 
+        Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
         int selfConstraintCount = (isSelfConstraint) ? 1 : 0;
 
+        Debug.Log("FUGA5");
         int numConstraints = c0Constraints.Count + g1ConstraintCount + selfConstraintCount;
 
         var C_tmp = new Matrix<float>[numConstraints, 0];
         var b_tmp2 = new List<float>();
 
+        Debug.Log("FUGA6");
         for (int i = 0; i < c0Constraints.Count; i++)
         {
             var (idx, pos) = c0Constraints[i];
@@ -130,6 +154,7 @@ public class ConstraintSolver
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
+        Debug.Log("FUGA7");
         if(hasg1Constraint)
         {
             Vector<float> b_ret;
@@ -137,6 +162,7 @@ public class ConstraintSolver
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
+        Debug.Log("FUGA8");
         if (isSelfConstraint)
         {
             Vector<float> b_ret;
@@ -144,6 +170,7 @@ public class ConstraintSolver
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
+        Debug.Log("FUGA9");
         var M_tmp = new Matrix<float>[2, 2];
 
         var C = Matrix<float>.Build.DenseOfMatrixArray(C_tmp);
@@ -151,6 +178,7 @@ public class ConstraintSolver
         b_tmp_enu.AddRange(b_tmp2);
         var b_final = Vector<float>.Build.DenseOfEnumerable(b_tmp_enu);
 
+        Debug.Log("FUGA10");
         M_tmp[0, 0] = A_tmp;
         M_tmp[1, 0] = C;
         M_tmp[0, 1] = C.Transpose();
@@ -158,9 +186,11 @@ public class ConstraintSolver
 
         var M = Matrix<float>.Build.DenseOfMatrixArray(M_tmp);
 
+        Debug.Log("FUGA11");
         //Solve Constraint
         var ansList = new List<float>(M.Solve(b_final).Enumerate());
 
+        Debug.Log("FUGA12");
         //Retrieve answer
         newControlPoints = new List<Vector3>();
         for(int i=0; i<N; i++)
@@ -172,6 +202,7 @@ public class ConstraintSolver
             newControlPoints.Add(point);
         }
 
+        Debug.Log("FUGA13");
         newPb = new PolyBezier();
         newPb.setControlPoints(newControlPoints);
     }
@@ -182,11 +213,11 @@ public class ConstraintSolver
         float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
         float tFactor = 0.5f / (N - 1);
         Debug.Assert(pb.numSegments == newPb.numSegments);
-        for(int i=0; i<pb.numSegments; i++)
+        for(int i=0; i<pb.controlPoints.Count; i++)
         {
             var tmpvec = newPb.controlPoints[i] - pb.controlPoints[i];
             ret += Vector3.Dot(tmpvec, tmpvec) * pFactor;
-            if (i < pb.numSegments - 1){
+            if (i < pb.controlPoints.Count - 1){
                 tmpvec = (newPb.controlPoints[i + 1] - newPb.controlPoints[i]) - (pb.controlPoints[i + 1] - pb.controlPoints[i]);
                 ret += Vector3.Dot(tmpvec, tmpvec) * tFactor / tNorms[i];
             }
@@ -200,18 +231,20 @@ public class ConstraintSolver
         float tFactor = 0.5f / (N - 1);
 
         tNorms = new float[N-1];
+        Debug.Log("FUGAx");
 
-        for(int i=0; i<N-1; i++)
+        for (int i=0; i<N-1; i++)
         {
             var Tangent = ControlPoints[i] - ControlPoints[i + 1];
             tNorms[i] = Vector3.Dot(Tangent, Tangent);
         }
 
+        Debug.Log("FUGAy");
 
         Matrix<float> A = Matrix<float>.Build.Dense(3 * N, 3 * N);
         for(int i=0; i<N; i++)
         {
-            for(int j=0; j<N; j++)
+            for(int j=0; j<3; j++)
             {
                 A[3 * i + j, 3 * i + j] += 2 * pFactor;
                 if (i > 0 && tNorms[i-1] > this.eps)
@@ -226,6 +259,7 @@ public class ConstraintSolver
                 }
             }
         }
+        Debug.Log("FUGAz");
         return (A, Vector<float>.Build.Dense(3 * N));
     }
 
