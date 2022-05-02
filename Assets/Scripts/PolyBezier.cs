@@ -63,8 +63,6 @@ public class PolyBezier : MonoBehaviour
         controlPoints.RemoveRange(bestIdx * 3 + 1, bestIdx * 3 + 3);
         controlPoints.InsertRange(bestIdx * 3 + 1, pointsToInsert);
 
-        this.Render();
-
         return bestIdx * 3 + 3;
     }
 
