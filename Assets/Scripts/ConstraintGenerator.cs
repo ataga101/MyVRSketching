@@ -49,7 +49,7 @@ public class ConstraintGenerator
         var nowIntersectionCandidate = intersectionCandidate;
 
         int numDisabled = 0;
-        Debug.Log("aHOGE1");
+        //Debug.Log("aHOGE1");
 
         for (int i=0; i<candidateNum; i++)
         {
@@ -61,7 +61,7 @@ public class ConstraintGenerator
             }
         }
 
-        Debug.Log("aHOGE2");
+        //Debug.Log("aHOGE2");
         List<bool> ControlPointUsed = new List<bool>();
 
         for(int i=0; i<pb.controlPoints.Count; i++)
@@ -70,7 +70,7 @@ public class ConstraintGenerator
         }
 
         Debug.Log(nowIntersectionCandidate.Count);
-        Debug.Log("aHOGE34");
+        //Debug.Log("aHOGE34");
         
         int candidateIdx = 0;
         int numSplit = 0;
@@ -115,7 +115,7 @@ public class ConstraintGenerator
                 retc0Constraint.Add((cpIdx, collisionPos));
             }
         }
-        Debug.Log("aHOGE3");
+        //Debug.Log("aHOGE3");
 
         Debug.Log(retc0Constraint.Count);
         return (nowPb, retc0Constraint, rettangentConstraint);

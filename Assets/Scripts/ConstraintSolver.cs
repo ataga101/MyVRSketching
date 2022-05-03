@@ -113,17 +113,17 @@ public class ConstraintSolver
         var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
         var b_tmp = Vector<float>.Build.Dense(3 * N);
 
-        Debug.Log("FUGA");
+        //Debug.Log("FUGA");
         var (A, b) = EfidelityMat();
         A_tmp += A;
         b_tmp += b;
 
-        Debug.Log("FUGA1");
+        //Debug.Log("FUGA1");
         (A, b) = EPlainerMat();
         A_tmp += A;
         b_tmp += b;
 
-        Debug.Log("FUGA2");
+        //Debug.Log("FUGA2");
         foreach ((int idx, Vector3 pos) in tangentConstraints)
         {
             (A, b) = EtangentMat(pos, idx);
@@ -131,46 +131,47 @@ public class ConstraintSolver
             b_tmp += b;
         }
 
-        Debug.Log("FUGA3");
+        //Debug.Log("FUGA3");
         bool hasg1Constraint = (N > 4);
         bool isSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
 
-        Debug.Log("FUGA4");
+        //Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
         int selfConstraintCount = (isSelfConstraint) ? 1 : 0;
 
-        Debug.Log("FUGA5");
+        //Debug.Log("FUGA5");
         int numConstraints = c0Constraints.Count + g1ConstraintCount + selfConstraintCount;
 
-        var C_tmp = new Matrix<float>[numConstraints, 0];
+        var C_tmp = new Matrix<float>[numConstraints, 1];
         var b_tmp2 = new List<float>();
 
-        Debug.Log("FUGA6");
+        //Debug.Log("FUGA6");
         for (int i = 0; i < c0Constraints.Count; i++)
         {
             var (idx, pos) = c0Constraints[i];
-            Vector<float> b_ret;
-            (C_tmp[i, 0], b_ret) = c0Mat(idx, pos);
+
+            (Matrix<float> C_ret, Vector<float> b_ret) = c0Mat(idx, pos);
+            C_tmp[i, 0] = C_ret;
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
-        Debug.Log("FUGA7");
+        //Debug.Log("FUGA7");
         if(hasg1Constraint)
         {
-            Vector<float> b_ret;
-            (C_tmp[c0Constraints.Count, 0], b_ret) = g1Mat();
+            (Matrix<float> C_ret, Vector<float> b_ret) = g1Mat();
+            C_tmp[c0Constraints.Count, 0] = C_ret;
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
-        Debug.Log("FUGA8");
+        //Debug.Log("FUGA8");
         if (isSelfConstraint)
         {
-            Vector<float> b_ret;
-            (C_tmp[c0Constraints.Count + g1ConstraintCount, 0], b_ret) = selfc0Mat();
+            (Matrix<float> C_ret, Vector<float> b_ret) = selfc0Mat();
+            C_tmp[c0Constraints.Count + g1ConstraintCount, 0] = C_ret;
             b_tmp2.AddRange(b_ret.Enumerate());
         }
 
-        Debug.Log("FUGA9");
+        //Debug.Log("FUGA9");
         var M_tmp = new Matrix<float>[2, 2];
 
         var C = Matrix<float>.Build.DenseOfMatrixArray(C_tmp);
@@ -178,7 +179,7 @@ public class ConstraintSolver
         b_tmp_enu.AddRange(b_tmp2);
         var b_final = Vector<float>.Build.DenseOfEnumerable(b_tmp_enu);
 
-        Debug.Log("FUGA10");
+        //Debug.Log("FUGA10");
         M_tmp[0, 0] = A_tmp;
         M_tmp[1, 0] = C;
         M_tmp[0, 1] = C.Transpose();
@@ -186,24 +187,25 @@ public class ConstraintSolver
 
         var M = Matrix<float>.Build.DenseOfMatrixArray(M_tmp);
 
-        Debug.Log("FUGA11");
+        //Debug.Log("FUGA11");
         //Solve Constraint
         var ansList = new List<float>(M.Solve(b_final).Enumerate());
 
-        Debug.Log("FUGA12");
+        //Debug.Log("FUGA12");
         //Retrieve answer
         newControlPoints = new List<Vector3>();
         for(int i=0; i<N; i++)
         {
             Vector3 point = Vector3.zero;
-            point.x = ansList[3 * N];
-            point.y = ansList[3 * N + 1];
-            point.z = ansList[3 * N + 2];
+            point.x = ansList[3 * i];
+            point.y = ansList[3 * i + 1];
+            point.z = ansList[3 * i + 2];
             newControlPoints.Add(point);
         }
 
-        Debug.Log("FUGA13");
-        newPb = new PolyBezier();
+        //Debug.Log("FUGA13");
+        var newPbObject = new GameObject();
+        newPb = newPbObject.AddComponent<PolyBezier>();
         newPb.setControlPoints(newControlPoints);
     }
 
@@ -231,7 +233,7 @@ public class ConstraintSolver
         float tFactor = 0.5f / (N - 1);
 
         tNorms = new float[N-1];
-        Debug.Log("FUGAx");
+        ////Debug.Log("FUGAx");
 
         for (int i=0; i<N-1; i++)
         {
@@ -239,7 +241,7 @@ public class ConstraintSolver
             tNorms[i] = Vector3.Dot(Tangent, Tangent);
         }
 
-        Debug.Log("FUGAy");
+        ////Debug.Log("FUGAy");
 
         Matrix<float> A = Matrix<float>.Build.Dense(3 * N, 3 * N);
         for(int i=0; i<N; i++)
@@ -259,7 +261,7 @@ public class ConstraintSolver
                 }
             }
         }
-        Debug.Log("FUGAz");
+        ////Debug.Log("FUGAz");
         return (A, Vector<float>.Build.Dense(3 * N));
     }
 
@@ -432,7 +434,7 @@ public class ConstraintSolver
     {
         var leftTNorms = new List<float>();
         var rightTNorms = new List<float>();
-        for(int i=1; i<pb.beziers.Count-1; i++)
+        for(int i=1; i<pb.beziers.Count; i++)
         {
             var leftT = ControlPoints[i * 3 - 1] - ControlPoints[i * 3];
             var rightT = ControlPoints[i * 3 + 1] - ControlPoints[i * 3];
@@ -443,15 +445,16 @@ public class ConstraintSolver
         var C = Matrix<float>.Build.Dense(3 * (bezierCount - 1), 3 * N);
         var b = Vector<float>.Build.Dense(3 * (bezierCount - 1));
 
-        for(int i=1; i<pb.beziers.Count-1; i++)
+        for(int i=0; i<pb.beziers.Count-1; i++)
         {
             if(leftTNorms[i] > eps && rightTNorms[i] > eps)
             {
+                int ptIdx = 3 * (i + 1);
                 for(int j=0; j<3; j++)
                 {
-                    C[3 * i + j, 3 * (i - 1) + j] = - (1 / leftTNorms[i]);
-                    C[3 * i + j, 3 * i + j] = (1 / leftTNorms[i]) + (1 / rightTNorms[i]);
-                    C[3 * i + j, 3 * (i + 1) + j] = (1 / rightTNorms[i]);
+                    C[3 * i + j, 3 * (ptIdx - 1) + j] = - (1 / leftTNorms[i]);
+                    C[3 * i + j, 3 * ptIdx + j] = (1 / leftTNorms[i]) + (1 / rightTNorms[i]);
+                    C[3 * i + j, 3 * (ptIdx + 1) + j] = (1 / rightTNorms[i]);
                 }
             }         
         }
