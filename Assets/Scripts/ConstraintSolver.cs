@@ -24,7 +24,9 @@ public class ConstraintSolver
 
     ConstraintGenerator constraintGenerator;
 
-    public ConstraintSolver(PolyBezier pb, List<CollisionData> collisionData, List<float> sampledTimes)
+    GameObject parentGameObject;
+
+    public ConstraintSolver(PolyBezier pb, List<CollisionData> collisionData, List<float> sampledTimes, GameObject parentObject)
     {
         //number of bezier curve
         this.bezierCount = pb.bezierCount;
@@ -44,6 +46,8 @@ public class ConstraintSolver
         this.pb = pb;
 
         constraintGenerator = new ConstraintGenerator(pb, collisionData, sampledTimes);
+
+        parentGameObject = parentObject;
     }
 
     public PolyBezier solve()
@@ -69,6 +73,8 @@ public class ConstraintSolver
                 Debug.Log("HOGE3");
         minEnergy = computeEfidelity();
         Debug.Log("HOGE4");
+
+        return newPb;
 
         while (!noPointRemoved)
         {
@@ -133,11 +139,11 @@ public class ConstraintSolver
 
         //Debug.Log("FUGA3");
         bool hasg1Constraint = (N > 4);
-        bool isSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
+        bool hasSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
 
         //Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
-        int selfConstraintCount = (isSelfConstraint) ? 1 : 0;
+        int selfConstraintCount = (hasSelfConstraint) ? 1 : 1;
 
         //Debug.Log("FUGA5");
         int numConstraints = c0Constraints.Count + g1ConstraintCount + selfConstraintCount;
@@ -164,7 +170,7 @@ public class ConstraintSolver
         }
 
         //Debug.Log("FUGA8");
-        if (isSelfConstraint)
+        if (true)
         {
             (Matrix<float> C_ret, Vector<float> b_ret) = selfc0Mat();
             C_tmp[c0Constraints.Count + g1ConstraintCount, 0] = C_ret;
@@ -204,8 +210,8 @@ public class ConstraintSolver
         }
 
         //Debug.Log("FUGA13");
-        var newPbObject = new GameObject();
-        newPb = newPbObject.AddComponent<PolyBezier>();
+        var newGameObject = new GameObject();
+        newPb = newGameObject.AddComponent<PolyBezier>();
         newPb.setControlPoints(newControlPoints);
     }
 
