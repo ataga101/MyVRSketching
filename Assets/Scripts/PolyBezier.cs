@@ -5,7 +5,7 @@ using UnityEngine;
 public class PolyBezier : MonoBehaviour
 {
     public List<Bezier> beziers = new List<Bezier> () { };
-    public int numSegments = 0;
+    public int bezierCount = 0;
     public List<Vector3> controlPoints;
 
     public void setControlPoints(List<Vector3> points)
@@ -19,7 +19,7 @@ public class PolyBezier : MonoBehaviour
             bezier.SetPoint(nowPoints);
             beziers.Add(bezier);
         }
-        numSegments = beziers.Count;
+        bezierCount = beziers.Count;
     }
 
     public void Render()
@@ -73,7 +73,7 @@ public class PolyBezier : MonoBehaviour
         Vector3 bestPos = Vector3.zero;
         float bestT = 0f;
 
-        for(int i=0; i<numSegments; i++)
+        for(int i=0; i<bezierCount; i++)
         {
             //Debug.Log("FUGA");
             Bezier b = beziers[i];

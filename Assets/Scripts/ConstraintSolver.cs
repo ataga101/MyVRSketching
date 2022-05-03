@@ -5,7 +5,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 public class ConstraintSolver
 {
-    int numSegments;
+    int bezierCount;
     int N;
 
     PolyBezier pb;
@@ -27,9 +27,9 @@ public class ConstraintSolver
     public ConstraintSolver(PolyBezier pb, List<CollisionData> collisionData, List<float> sampledTimes)
     {
         //number of bezier curve
-        this.numSegments = pb.numSegments;
+        this.bezierCount = pb.bezierCount;
         //number of control points
-        this.N = numSegments * 3 + 1;
+        this.N = bezierCount * 3 + 1;
 
         //control points
         ControlPoints = new List<Vector3>();
@@ -212,7 +212,7 @@ public class ConstraintSolver
         float ret = 0.0f;
         float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
         float tFactor = 0.5f / (N - 1);
-        Debug.Assert(pb.numSegments == newPb.numSegments);
+        Debug.Assert(pb.bezierCount == newPb.bezierCount);
         for(int i=0; i<pb.controlPoints.Count; i++)
         {
             var tmpvec = newPb.controlPoints[i] - pb.controlPoints[i];
@@ -432,26 +432,26 @@ public class ConstraintSolver
     {
         var leftTNorms = new List<float>();
         var rightTNorms = new List<float>();
-        for(int i=0; i<numSegments-1; i++)
+        for(int i=1; i<pb.beziers.Count-1; i++)
         {
-            var leftT = ControlPoints[i * 3 + 3] - ControlPoints[i * 3 + 2];
-            var rightT = ControlPoints[i * 3 + 4] - ControlPoints[i * 3 + 3];
+            var leftT = ControlPoints[i * 3 - 1] - ControlPoints[i * 3];
+            var rightT = ControlPoints[i * 3 + 1] - ControlPoints[i * 3];
             leftTNorms.Add(leftT.magnitude);
             rightTNorms.Add(rightT.magnitude);
         }
 
-        var C = Matrix<float>.Build.Dense(3 * (numSegments - 1), 3 * N);
-        var b = Vector<float>.Build.Dense(3 * (numSegments - 1));
+        var C = Matrix<float>.Build.Dense(3 * (bezierCount - 1), 3 * N);
+        var b = Vector<float>.Build.Dense(3 * (bezierCount - 1));
 
-        for(int i=0; i<numSegments-1; i++)
+        for(int i=1; i<pb.beziers.Count-1; i++)
         {
             if(leftTNorms[i] > eps && rightTNorms[i] > eps)
             {
                 for(int j=0; j<3; j++)
                 {
-                    C[3 * i + j, 3 * i + j] = - (1 / leftTNorms[i]);
-                    C[3 * i + j, 3 * (i + 1) + j] = (1 / leftTNorms[i]) - (1 / rightTNorms[i]);
-                    C[3 * i + j, 3 * (i + 2) + j] = (1 / rightTNorms[i]);
+                    C[3 * i + j, 3 * (i - 1) + j] = - (1 / leftTNorms[i]);
+                    C[3 * i + j, 3 * i + j] = (1 / leftTNorms[i]) + (1 / rightTNorms[i]);
+                    C[3 * i + j, 3 * (i + 1) + j] = (1 / rightTNorms[i]);
                 }
             }         
         }

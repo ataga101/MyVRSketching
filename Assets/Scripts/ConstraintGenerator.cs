@@ -74,10 +74,10 @@ public class ConstraintGenerator
         
         int candidateIdx = 0;
         int numSplit = 0;
-        for(int i=0; i<pb.numSegments-1 && candidateIdx < nowIntersectionCandidate.Count; i++)
+        for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count; i++)
         {
             var (strokeId, collisionTime, collisionPos) = nowIntersectionCandidate[candidateIdx];
-            Debug.Log((i, pb.numSegments, sampledTimes.Count));
+            Debug.Log((i, pb.bezierCount, sampledTimes.Count));
             
             if (sampledTimes[i] <= collisionTime && sampledTimes[i + 1] >= collisionTime)
             {
