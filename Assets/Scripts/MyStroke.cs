@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 public class MyStroke
 {
@@ -65,7 +66,8 @@ public class MyStroke
         Debug.Log("Start Constraint Solving");
         cs = new ConstraintSolver(pb, collisionData, times, this.gameObject);
         Debug.Log("Constraint Generated");
-        pb.setControlPoints(cs.solve());
+        var newControlPoints = cs.solve();
+        pb.setControlPoints(newControlPoints);
         Debug.Log("Constraint Solved");
         pb.Render();
     }
@@ -105,6 +107,16 @@ public class MyStroke
 
         pb = gameObject.AddComponent<PolyBezier>();
         pb.setControlPoints(cPoints);
+        SaveControlPointsToFile(cPoints);
+    }
+
+    private void SaveControlPointsToFile(List<Vector3> plist)
+    {
+        File.AppendAllText("C:\\Users\\ui-lab\\Desktop\\sample.txt", System.Environment.NewLine);
+        foreach(var p in plist)
+        {
+            File.AppendAllText("C:\\Users\\ui-lab\\Desktop\\sample.txt", "new Vector3(" + p.x.ToString() + ", " + p.y.ToString() + ", " + p.z.ToString() + "), " + System.Environment.NewLine);
+        }        
     }
 
     public void SetCollision()

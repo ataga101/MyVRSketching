@@ -51,7 +51,9 @@ public class ConstraintGenerator
 
     public (List<Vector3>, List<(int, Vector3)>, List<(int, Vector3)>) Generate(List<bool> disableMap)
     {
+        //Reset PolyBezier curve
         pb.setControlPoints(initialControlPoints);
+
         List<(int, Vector3)> retc0Constraint = new List<(int, Vector3)>();
         List<(int, Vector3)> rettangentConstraint = new List<(int, Vector3)>();
 
@@ -78,7 +80,7 @@ public class ConstraintGenerator
             ControlPointUsed.Add(false);
         }
 
-        Debug.Log(nowIntersectionCandidate.Count);
+        //Debug.Log(nowIntersectionCandidate.Count);
         //Debug.Log("aHOGE34");
         
         int candidateIdx = 0;
@@ -126,7 +128,7 @@ public class ConstraintGenerator
             }
         }
 
-        Debug.Log(retc0Constraint.Count);
+        //Debug.Log(retc0Constraint.Count);
         return (pb.controlPoints, retc0Constraint, rettangentConstraint);
     }
 }

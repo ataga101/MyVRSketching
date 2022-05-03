@@ -41,7 +41,7 @@ public class ConstraintSolver
 
         this.pb = pb;
 
-        constraintGenerator = new ConstraintGenerator(pb, collisionData, sampledTimes);
+        constraintGenerator = new ConstraintGenerator(pb.controlPoints, collisionData, sampledTimes);
 
         parentGameObject = parentObject;
     }
@@ -63,7 +63,7 @@ public class ConstraintSolver
         float minEnergy;
         bool noPointRemoved = false;
 
-        Debug.Log("HOGE1");
+        //Debug.Log("HOGE1");
 
         List<(int, Vector3)> c0Constraints;
         List<(int, Vector3)> tangentConstraints;
@@ -72,14 +72,14 @@ public class ConstraintSolver
         (controlPoints, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
         pb.setControlPoints(controlPoints);
 
-        Debug.Log("HOGE2");
+        //Debug.Log("HOGE2");
 
         solveSingle(c0Constraints, tangentConstraints);
         bestControlPoints = new List<Vector3>(newControlPoints);
 
-        Debug.Log("HOGE3");
+        //Debug.Log("HOGE3");
         minEnergy = computeEfidelity();
-        Debug.Log("HOGE4");
+        //Debug.Log("HOGE4");
 
         //Remove points and test
         while (!noPointRemoved)
@@ -87,8 +87,8 @@ public class ConstraintSolver
             noPointRemoved = true;
             for(int i=0; i<constraintGenerator.candidateNum; i++)
             {
-                Debug.Log("HOGE");
-                Debug.Log(i);
+                //Debug.Log("HOGE");
+                //Debug.Log(i);
                 if (removedMap[i])
                 {
                     continue;
@@ -152,7 +152,7 @@ public class ConstraintSolver
 
         //Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
-        int selfConstraintCount = (hasSelfConstraint) ? 1 : 1;
+        int selfConstraintCount = (hasSelfConstraint) ? 1 : 0;
 
         //Debug.Log("FUGA5");
         int numConstraints = c0Constraints.Count + g1ConstraintCount + selfConstraintCount;
@@ -179,7 +179,7 @@ public class ConstraintSolver
         }
 
         //Debug.Log("FUGA8");
-        if (true)
+        if (hasSelfConstraint)
         {
             (Matrix<float> C_ret, Vector<float> b_ret) = selfc0Mat();
             C_tmp[c0Constraints.Count + g1ConstraintCount, 0] = C_ret;
@@ -211,10 +211,10 @@ public class ConstraintSolver
         newControlPoints = new List<Vector3>();
         for(int i=0; i<N; i++)
         {
-            Vector3 point = Vector3.zero;
-            point.x = ansList[3 * i];
-            point.y = ansList[3 * i + 1];
-            point.z = ansList[3 * i + 2];
+            Vector3 point = new Vector3(
+            ansList[3 * i],
+            ansList[3 * i + 1],
+            ansList[3 * i + 2]);
             newControlPoints.Add(point);
         }
     }
