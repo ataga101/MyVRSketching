@@ -5,6 +5,7 @@ using UnityEngine;
 public class ConstraintGenerator
 {
     PolyBezier pb;
+    List<Vector3> initialControlPoints;
     List<CollisionData> collisionData;
 
     List<(int, float, Vector3)> intersectionCandidate;
@@ -14,9 +15,17 @@ public class ConstraintGenerator
 
     public float minControlPointDistance = 0.1f;
 
-    public ConstraintGenerator(PolyBezier pb, List<CollisionData> collisionData, List<float> sampledTimes)
+    GameObject cgObject;
+
+    public ConstraintGenerator(List<Vector3> controlPoints, List<CollisionData> collisionData, List<float> sampledTimes)
     {
-        this.pb = pb;
+        cgObject = new GameObject();
+        cgObject.name = "ConstraintGenerator";
+        this.pb = cgObject.AddComponent<PolyBezier>();
+        pb.setControlPoints(controlPoints);
+
+        this.initialControlPoints = new List<Vector3>(controlPoints);
+
         this.collisionData = collisionData;
 
         //CollisionData -> Intersection Candidate
@@ -40,12 +49,12 @@ public class ConstraintGenerator
     }
 
 
-    public (PolyBezier, List<(int, Vector3)>, List<(int, Vector3)>) Generate(List<bool> disableMap)
+    public (List<Vector3>, List<(int, Vector3)>, List<(int, Vector3)>) Generate(List<bool> disableMap)
     {
+        pb.setControlPoints(initialControlPoints);
         List<(int, Vector3)> retc0Constraint = new List<(int, Vector3)>();
         List<(int, Vector3)> rettangentConstraint = new List<(int, Vector3)>();
 
-        var nowPb = pb;
         var nowIntersectionCandidate = intersectionCandidate;
 
         int numDisabled = 0;
@@ -74,11 +83,12 @@ public class ConstraintGenerator
         
         int candidateIdx = 0;
         int numSplit = 0;
+
         for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count; i++)
         {
             var (strokeId, collisionTime, collisionPos) = nowIntersectionCandidate[candidateIdx];
             Debug.Log((i, pb.bezierCount, sampledTimes.Count));
-            
+
             if (sampledTimes[i] <= collisionTime && sampledTimes[i + 1] >= collisionTime)
             {
                 var nearestControlPoint1 = pb.controlPoints[i * 3];
@@ -104,7 +114,7 @@ public class ConstraintGenerator
 
                 if(mindist > minControlPointDistance || ControlPointUsed[i])
                 {
-                    cpIdx = nowPb.SplitNear(collisionPos);
+                    cpIdx = pb.SplitNear(collisionPos);
                     numSplit++;
                 }
                 else
@@ -115,9 +125,8 @@ public class ConstraintGenerator
                 retc0Constraint.Add((cpIdx, collisionPos));
             }
         }
-        //Debug.Log("aHOGE3");
 
         Debug.Log(retc0Constraint.Count);
-        return (nowPb, retc0Constraint, rettangentConstraint);
+        return (pb.controlPoints, retc0Constraint, rettangentConstraint);
     }
 }

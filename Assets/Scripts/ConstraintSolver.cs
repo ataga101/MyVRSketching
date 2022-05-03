@@ -9,15 +9,11 @@ public class ConstraintSolver
     int N;
 
     PolyBezier pb;
-    List<Vector3> ControlPoints;
-
-    PolyBezier newPb;
+    List<Vector3> controlPoints;
     List<Vector3> newControlPoints;
 
+    //Norms of tangents
     float[] tNorms;
-
-    List<(int, Vector3)> c0Constraints;
-    List<(int, Vector3)> tangentConstraints;
 
     float eps = 10e-6f;
     float displacement_normalizer = 0.04f;
@@ -34,14 +30,14 @@ public class ConstraintSolver
         this.N = bezierCount * 3 + 1;
 
         //control points
-        ControlPoints = new List<Vector3>();
+        controlPoints = new List<Vector3>();
         for (int i = 0; i < pb.beziers.Count; i++)
         {
-            ControlPoints.Add(pb.beziers[i].P0);
-            ControlPoints.Add(pb.beziers[i].P1);
-            ControlPoints.Add(pb.beziers[i].P2);
+            controlPoints.Add(pb.beziers[i].P0);
+            controlPoints.Add(pb.beziers[i].P1);
+            controlPoints.Add(pb.beziers[i].P2);
         }
-        ControlPoints.Add(pb.beziers[pb.beziers.Count - 1].P3);
+        controlPoints.Add(pb.beziers[pb.beziers.Count - 1].P3);
 
         this.pb = pb;
 
@@ -50,7 +46,8 @@ public class ConstraintSolver
         parentGameObject = parentObject;
     }
 
-    public PolyBezier solve()
+    //Returns ControlPoints
+    public List<Vector3> solve()
     {
         var disabledMap = new List<bool>();
         var removedMap = new List<bool>();
@@ -62,20 +59,29 @@ public class ConstraintSolver
             bestMap.Add(false);
         }
 
-        PolyBezier bestPb;
+        List<Vector3> bestControlPoints;
         float minEnergy;
         bool noPointRemoved = false;
 
         Debug.Log("HOGE1");
-        (bestPb, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
-                Debug.Log("HOGE2");
-        solveSingle();
-                Debug.Log("HOGE3");
+
+        List<(int, Vector3)> c0Constraints;
+        List<(int, Vector3)> tangentConstraints;
+
+        //Solve without removing constraints
+        (controlPoints, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
+        pb.setControlPoints(controlPoints);
+
+        Debug.Log("HOGE2");
+
+        solveSingle(c0Constraints, tangentConstraints);
+        bestControlPoints = new List<Vector3>(newControlPoints);
+
+        Debug.Log("HOGE3");
         minEnergy = computeEfidelity();
         Debug.Log("HOGE4");
 
-        return newPb;
-
+        //Remove points and test
         while (!noPointRemoved)
         {
             noPointRemoved = true;
@@ -89,23 +95,25 @@ public class ConstraintSolver
                 }
                 disabledMap = removedMap;
                 disabledMap[i] = true;
-                
-                (pb, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
-                solveSingle();
+
+                //Don't forget to set control points
+                (controlPoints, c0Constraints, tangentConstraints) = constraintGenerator.Generate(disabledMap);
+                pb.setControlPoints(controlPoints);
+
+                solveSingle(c0Constraints, tangentConstraints);
                 float energy = computeEfidelity();
 
                 if (energy < minEnergy)
                 {
                     noPointRemoved = false;
-                    bestMap = disabledMap;
-                    bestPb = newPb;
+                    bestMap = new List<bool> (disabledMap);
+                    bestControlPoints = new List<Vector3> (newControlPoints);
                     minEnergy = energy;
                 }
             }
             removedMap = bestMap;
         }
-        
-        return bestPb;
+        return bestControlPoints;
     }
 
     private float computeEConnectivity(List<bool> disabledMap)
@@ -114,7 +122,8 @@ public class ConstraintSolver
         return ret;
     }
 
-    public void solveSingle() { 
+    //Generate constraint from controlPoints -> Solve -> Store Result in newControlPoints
+    private void solveSingle(List<(int, Vector3)> c0Constraints, List<(int, Vector3)> tangentConstraints) { 
         //solve
         var A_tmp = Matrix<float>.Build.Dense(3 * N, 3 * N);
         var b_tmp = Vector<float>.Build.Dense(3 * N);
@@ -139,7 +148,7 @@ public class ConstraintSolver
 
         //Debug.Log("FUGA3");
         bool hasg1Constraint = (N > 4);
-        bool hasSelfConstraint = (ControlPoints[0] - ControlPoints[ControlPoints.Count-1]).magnitude < 0.05;
+        bool hasSelfConstraint = (controlPoints[0] - controlPoints[controlPoints.Count-1]).magnitude < 0.05;
 
         //Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
@@ -208,31 +217,26 @@ public class ConstraintSolver
             point.z = ansList[3 * i + 2];
             newControlPoints.Add(point);
         }
-
-        //Debug.Log("FUGA13");
-        var newGameObject = new GameObject();
-        newPb = newGameObject.AddComponent<PolyBezier>();
-        newPb.setControlPoints(newControlPoints);
     }
 
+    //Compute Efidelity between controlPoints and newControlPoints
     private float computeEfidelity()
     {
         float ret = 0.0f;
         float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
         float tFactor = 0.5f / (N - 1);
-        Debug.Assert(pb.bezierCount == newPb.bezierCount);
-        for(int i=0; i<pb.controlPoints.Count; i++)
+        for(int i=0; i<controlPoints.Count; i++)
         {
-            var tmpvec = newPb.controlPoints[i] - pb.controlPoints[i];
+            var tmpvec = newControlPoints[i] - controlPoints[i];
             ret += Vector3.Dot(tmpvec, tmpvec) * pFactor;
-            if (i < pb.controlPoints.Count - 1){
-                tmpvec = (newPb.controlPoints[i + 1] - newPb.controlPoints[i]) - (pb.controlPoints[i + 1] - pb.controlPoints[i]);
+            if (i < controlPoints.Count - 1){
+                tmpvec = (newControlPoints[i + 1] - newControlPoints[i]) - (controlPoints[i + 1] - controlPoints[i]);
                 ret += Vector3.Dot(tmpvec, tmpvec) * tFactor / tNorms[i];
             }
         }
         return ret;
     }
-
+    
     private (Matrix<float>, Vector<float>) EfidelityMat()
     {
         float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
@@ -243,7 +247,7 @@ public class ConstraintSolver
 
         for (int i=0; i<N-1; i++)
         {
-            var Tangent = ControlPoints[i] - ControlPoints[i + 1];
+            var Tangent = controlPoints[i] - controlPoints[i + 1];
             tNorms[i] = Vector3.Dot(Tangent, Tangent);
         }
 
@@ -276,7 +280,7 @@ public class ConstraintSolver
         Vector3 avg = Vector3.zero;
         for(int i=0; i<N; i++)
         {
-            avg += ControlPoints[i];
+            avg += controlPoints[i];
         }
 
         avg /= N;
@@ -286,7 +290,7 @@ public class ConstraintSolver
 
         for(int i=0; i<N; i++)
         {
-            Vector3 r = ControlPoints[i] - avg;
+            Vector3 r = controlPoints[i] - avg;
             xx += r.x * r.x;
             xy += r.x * r.y;
             xz += r.x * r.z;
@@ -339,7 +343,7 @@ public class ConstraintSolver
 
         for(int i=0; i<N-1; i++)
         {
-            var diff = ControlPoints[i + 1] - ControlPoints[i];
+            var diff = controlPoints[i + 1] - controlPoints[i];
             tangents.Add(Vector<float>.Build.Dense(new float[] { diff.x, diff.y, diff.z }));
         }
 
@@ -391,7 +395,7 @@ public class ConstraintSolver
             bEnd = bezierIndex;
         }
 
-        Vector3 tangent = ControlPoints[bEnd] - ControlPoints[bStart];
+        Vector3 tangent = controlPoints[bEnd] - controlPoints[bStart];
 
         var crossTtarget = Matrix<float>.Build.Dense(3, 3);
         crossTtarget[0, 1] = -Ttarget.z;
@@ -442,8 +446,8 @@ public class ConstraintSolver
         var rightTNorms = new List<float>();
         for(int i=1; i<pb.beziers.Count; i++)
         {
-            var leftT = ControlPoints[i * 3 - 1] - ControlPoints[i * 3];
-            var rightT = ControlPoints[i * 3 + 1] - ControlPoints[i * 3];
+            var leftT = controlPoints[i * 3 - 1] - controlPoints[i * 3];
+            var rightT = controlPoints[i * 3 + 1] - controlPoints[i * 3];
             leftTNorms.Add(leftT.magnitude);
             rightTNorms.Add(rightT.magnitude);
         }

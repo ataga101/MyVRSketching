@@ -11,7 +11,7 @@ public class PolyBezier : MonoBehaviour
     public void setControlPoints(List<Vector3> points)
     {
         controlPoints = points;
-        //Debug.Log(numSegments);
+        beziers = new List<Bezier>();
         for(int i=0; i<points.Count-1; i+=3)
         {
             var nowPoints = points.GetRange(i, 4);
@@ -89,8 +89,6 @@ public class PolyBezier : MonoBehaviour
 
         return (bestPos, bestBezierIdx, bestT);
     }
-
-
 
     public void SetCollision()
     {

@@ -65,7 +65,7 @@ public class MyStroke
         Debug.Log("Start Constraint Solving");
         cs = new ConstraintSolver(pb, collisionData, times, this.gameObject);
         Debug.Log("Constraint Generated");
-        pb = cs.solve();
+        pb.setControlPoints(cs.solve());
         Debug.Log("Constraint Solved");
         pb.Render();
     }
