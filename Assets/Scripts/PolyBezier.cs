@@ -8,6 +8,8 @@ public class PolyBezier : MonoBehaviour
     public int bezierCount = 0;
     public List<Vector3> controlPoints;
 
+    GameObject ControlPointsViewer = null;
+
     public void setControlPoints(List<Vector3> points)
     {
         controlPoints = points;
@@ -43,6 +45,12 @@ public class PolyBezier : MonoBehaviour
     public int SplitNear(Vector3 pos)
     { 
         var (bestPos, bestIdx, bestT) = getNearestPosAndIdxAndT(pos);
+
+        if(bestT == 0f || bestT == 1f)
+        {
+            return (3 * (bestIdx + (int)bestT));
+        }
+
         var bestBezier = beziers[bestIdx];
         var (L1, L2) = bestBezier.Split(bestT);
 
@@ -90,6 +98,11 @@ public class PolyBezier : MonoBehaviour
         return (bestPos, bestBezierIdx, bestT);
     }
 
+    public void addLineRenderer()
+    {
+        gameObject.AddComponent<LineRenderer>();
+    }
+
     public void SetCollision()
     {
         foreach(var b in beziers)
@@ -97,6 +110,37 @@ public class PolyBezier : MonoBehaviour
             //Debug.Log("Start setting collider");
             b.SetCollision();
         }
+    }
+
+    public void ShowControl()
+    {
+        LineRenderer lineRenderer;
+        if(ControlPointsViewer != null)
+        {
+            Destroy(ControlPointsViewer);
+        }
+        ControlPointsViewer = new GameObject();
+        ControlPointsViewer.name = "Control Points";
+        ControlPointsViewer.transform.SetParent(this.gameObject.transform);
+        lineRenderer = ControlPointsViewer.AddComponent<LineRenderer>();
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        lineRenderer.startColor = Color.yellow;
+        lineRenderer.endColor = Color.yellow;
+        lineRenderer.startWidth = 0.002f;
+        lineRenderer.endWidth = 0.002f;
+
+        int cnt = 0;
+        foreach(var point in controlPoints)
+        {
+            var pointSphere = (cnt % 3 == 0) ? GameObject.CreatePrimitive(PrimitiveType.Cube) : GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            pointSphere.transform.SetParent(ControlPointsViewer.transform);
+            pointSphere.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
+            pointSphere.transform.position = point;
+            cnt++;
+        }
+
+        lineRenderer.positionCount = controlPoints.Count;
+        lineRenderer.SetPositions(controlPoints.ToArray());
     }
 
 }

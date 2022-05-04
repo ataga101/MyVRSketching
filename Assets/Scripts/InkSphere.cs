@@ -15,7 +15,7 @@ public class InkSphere : MonoBehaviour
         lineDrawer = lineDrawerObject.GetComponent<LineDrawer>();
     }
 
-    private void LateUpdate()
+    private void Update()
     {
         var pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
         transform.position = pose.GetLocalPosition(SteamVR_Input_Sources.RightHand);

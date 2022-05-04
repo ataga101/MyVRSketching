@@ -10,7 +10,7 @@ public class MyStroke
     List<float> times;
     int numSamples;
 
-    float maxDistDelta = 0.2f;
+    float maxDistDelta = 0.1f;
     float maxTimeDelta = 0.2f;
 
     public PolyBezier pb { get; set; }
@@ -87,16 +87,24 @@ public class MyStroke
         for(int i=1; i<numSamples; i++)
         {
             var nowPos = positions[i];
-            var nowVel = velocities[i];
+            Vector3 nowVel;
+
+            if (i > 0) {
+                nowVel = (positions[i] - positions[i - 1]) / (times[i] - times[i - 1]);
+            }
+            else
+            {
+                nowVel = (positions[i + 1] - positions[i]) / (times[i + 1] - times[i]);
+            }
+
             var nowTime = times[i];
             var timeDelta = nowTime - formerTime;
             distDelta += (nowPos - positions[i-1]).magnitude;
             if (timeDelta > maxTimeDelta || distDelta > maxDistDelta) 
             {
-                //Debug.Log("Added three points");
-                //Debug.Log((timeDelta, distDelta));
-                cPoints.Add((formerVel * timeDelta / 3) + formerPos);
-                cPoints.Add(nowPos - (nowVel * timeDelta / 3));
+                var (p1, p2) = calcBestFitBezierControlPoints(formerPos, nowPos, formerVel, nowVel, positions, timeDelta);
+                cPoints.Add(p1);
+                cPoints.Add(p2);
                 cPoints.Add(nowPos);
                 formerPos = nowPos;
                 formerVel = nowVel;
@@ -108,6 +116,46 @@ public class MyStroke
         pb = gameObject.AddComponent<PolyBezier>();
         pb.setControlPoints(cPoints);
         SaveControlPointsToFile(cPoints);
+    }
+
+    private (Vector3, Vector3) calcBestFitBezierControlPoints(Vector3 startPos, Vector3 endPos, Vector3 startVelocity, Vector3 endVelocity, List<Vector3> samplePositions, float timeDelta)
+    {
+        int steps = 20;
+        float c1 = timeDelta;
+        float c2 = timeDelta;
+
+        GameObject tmpBezierObject = new GameObject();
+
+        var (bestP1, bestP2) = (new Vector3(), new Vector3());
+        var minDistanceSum = 10000000f;
+
+        for(int i=0; i<=steps; i++)
+        {
+            for(int j=0; j<=steps; j++)
+            {
+                Vector3 tmpP1 = startPos + (c1 * i / steps) * startVelocity;
+                Vector3 tmpP2 = endPos - (c2 * i / steps) * endVelocity;
+
+                var tmpBezier = tmpBezierObject.AddComponent<Bezier>();
+                tmpBezier.SetPoint(new List<Vector3>() { startPos, tmpP1, tmpP2, endPos });
+                float sum = 0;
+                foreach(var sample in samplePositions)
+                {
+                    var (pos, distance, t) = tmpBezier.getNearestPosAndDistAndT(sample);
+                    sum += distance;
+                }
+
+                if(sum < minDistanceSum)
+                {
+                    minDistanceSum = sum;
+                    bestP1 = tmpP1;
+                    bestP2 = tmpP2;
+                }
+            }
+        }
+
+        GameObject.Destroy(tmpBezierObject);
+        return (bestP1, bestP2);
     }
 
     private void SaveControlPointsToFile(List<Vector3> plist)

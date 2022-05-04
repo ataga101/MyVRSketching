@@ -55,7 +55,7 @@ public class Bezier : MonoBehaviour
         float dist = 10e6f;
         float t = 0f;
 
-        for(int i=0; i<numSegment; i++)
+        for(int i=0; i<=numSegment; i++)
         {
             float nowt = i / (float)numSegment;
             Vector3 point = GetPoint(t);

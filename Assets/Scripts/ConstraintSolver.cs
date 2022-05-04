@@ -17,6 +17,7 @@ public class ConstraintSolver
 
     float eps = 10e-6f;
     float displacement_normalizer = 0.04f;
+    float lambda = 0.6f;
 
     ConstraintGenerator constraintGenerator;
 
@@ -78,7 +79,7 @@ public class ConstraintSolver
         bestControlPoints = new List<Vector3>(newControlPoints);
 
         //Debug.Log("HOGE3");
-        minEnergy = computeEfidelity();
+        minEnergy = computeEnergy(disabledMap);
         //Debug.Log("HOGE4");
 
         //Remove points and test
@@ -101,7 +102,7 @@ public class ConstraintSolver
                 pb.setControlPoints(controlPoints);
 
                 solveSingle(c0Constraints, tangentConstraints);
-                float energy = computeEfidelity();
+                float energy = computeEnergy(disabledMap);
 
                 if (energy < minEnergy)
                 {
@@ -118,8 +119,29 @@ public class ConstraintSolver
 
     private float computeEConnectivity(List<bool> disabledMap)
     {
+        if (disabledMap.Count == 0)
+        {
+            return Mathf.Exp(-1);
+        }
+
         float ret = 0f;
-        return ret;
+
+        for(int i=0; i<disabledMap.Count; i++)
+        {
+            if (!disabledMap[i])
+            {
+                ret += 1f;
+            }
+        }
+
+        float x = ret / disabledMap.Count;
+
+        return Mathf.Exp(- x * x);
+    }
+
+    private float computeEnergy(List<bool> disabledMap)
+    {
+        return lambda * computeEfidelity() + (1 - lambda) * computeEConnectivity(disabledMap);
     }
 
     //Generate constraint from controlPoints -> Solve -> Store Result in newControlPoints
@@ -133,6 +155,7 @@ public class ConstraintSolver
         A_tmp += A;
         b_tmp += b;
 
+        
         //Debug.Log("FUGA1");
         (A, b) = EPlainerMat();
         A_tmp += A;
@@ -148,7 +171,7 @@ public class ConstraintSolver
 
         //Debug.Log("FUGA3");
         bool hasg1Constraint = (N > 4);
-        bool hasSelfConstraint = (controlPoints[0] - controlPoints[controlPoints.Count-1]).magnitude < 0.05;
+        bool hasSelfConstraint = (controlPoints[0] - controlPoints[controlPoints.Count-1]).magnitude < 0.2;
 
         //Debug.Log("FUGA4");
         int g1ConstraintCount = (hasg1Constraint) ? 1 : 0;
@@ -181,9 +204,15 @@ public class ConstraintSolver
         //Debug.Log("FUGA8");
         if (hasSelfConstraint)
         {
+            //Self constraint constraint
             (Matrix<float> C_ret, Vector<float> b_ret) = selfc0Mat();
             C_tmp[c0Constraints.Count + g1ConstraintCount, 0] = C_ret;
             b_tmp2.AddRange(b_ret.Enumerate());
+
+            //Tangent constraint
+            (A, b) = EtangentMat(controlPoints[1] - controlPoints[0], N - 1);
+            A_tmp += A;
+            b_tmp += b;
         }
 
         //Debug.Log("FUGA9");
@@ -215,7 +244,7 @@ public class ConstraintSolver
             ansList[3 * i],
             ansList[3 * i + 1],
             ansList[3 * i + 2]);
-            newControlPoints.Add(point);
+            newControlPoints.Add(point + controlPoints[i]);
         }
     }
 
@@ -223,7 +252,7 @@ public class ConstraintSolver
     private float computeEfidelity()
     {
         float ret = 0.0f;
-        float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
+        float pFactor = 0.5f / (N * displacement_normalizer * displacement_normalizer);
         float tFactor = 0.5f / (N - 1);
         for(int i=0; i<controlPoints.Count; i++)
         {
@@ -239,7 +268,7 @@ public class ConstraintSolver
     
     private (Matrix<float>, Vector<float>) EfidelityMat()
     {
-        float pFactor = 0.5f / N / displacement_normalizer / displacement_normalizer;
+        float pFactor = 0.5f / (N * displacement_normalizer * displacement_normalizer);
         float tFactor = 0.5f / (N - 1);
 
         tNorms = new float[N-1];
@@ -378,21 +407,21 @@ public class ConstraintSolver
         return (A, b);
     }
 
-    private (Matrix<float>, Vector<float>) EtangentMat(Vector3 Ttarget, int bezierIndex)
+    private (Matrix<float>, Vector<float>) EtangentMat(Vector3 Ttarget, int index)
     {
         Matrix<float> A = Matrix<float>.Build.Dense(3 * N, 3 * N);
         Vector<float> b = Vector<float>.Build.Dense(3 * N);
 
         int bStart, bEnd;
-        if (bezierIndex < N - 1)
+        if (index < N - 1)
         {
-            bStart = bezierIndex;
-            bEnd = bezierIndex + 1;
+            bStart = index;
+            bEnd = index + 1;
         }
         else
         {
-            bStart = bezierIndex - 1;
-            bEnd = bezierIndex;
+            bStart = index - 1;
+            bEnd = index;
         }
 
         Vector3 tangent = controlPoints[bEnd] - controlPoints[bStart];
@@ -429,7 +458,8 @@ public class ConstraintSolver
     private (Matrix<float>, Vector<float>) c0Mat(int index, Vector3 pos)
     {
         var C = Matrix<float>.Build.Dense(3, 3 * N);
-        var b = Vector<float>.Build.Dense(new float[] {pos.x, pos.y, pos.z });
+        var b_vec = controlPoints[index] - pos;
+        var b = Vector<float>.Build.Dense(new float[] {b_vec.x, b_vec.y, b_vec.z });
 
         for(int i=0; i<3; i++)
         {
@@ -437,7 +467,6 @@ public class ConstraintSolver
         }
 
         return (C, b);
-
     }
 
     private (Matrix<float>, Vector<float>) g1Mat()
@@ -480,8 +509,13 @@ public class ConstraintSolver
         for(int i=0; i<3; i++)
         {
             C[i, i] = 1f;
-            C[i, 3 * (N - 1) + i] = -1;
+            C[i, 3 * (N - 1) + i] = -1f;
         }
+
+        var d_vec = controlPoints[N - 1] - controlPoints[0];
+        d[0] = d_vec.x;
+        d[1] = d_vec.y;
+        d[2] = d_vec.z;
 
         return (C, d);
     }
