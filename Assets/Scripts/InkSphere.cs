@@ -23,11 +23,14 @@ public class InkSphere : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        //Debug.Log("Collision Detected");
-        lineDrawer.AddCollisionData(
-                collision.gameObject.transform.parent.gameObject.name,
-                Time.time,
-                collision.GetContact(0).point);
+        //Debug.Log("Collision Detected: " + collision.gameObject.transform.parent.gameObject.name);
+        if(collision.gameObject.transform.parent != null)
+        {
+            lineDrawer.AddCollisionData(
+                            collision.gameObject.transform.parent.gameObject.name,
+                            Time.time,
+                            collision.GetContact(0).point);
+        }
     }
 }
 

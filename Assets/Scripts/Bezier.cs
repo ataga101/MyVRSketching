@@ -89,7 +89,7 @@ public class Bezier : MonoBehaviour
 
             col.transform.position = (pos1 + pos2) / 2;
             col.transform.LookAt(pos1);
-            col.height = Mathf.Sqrt(Vector3.Dot((pos1 - pos2), (pos1 - pos2)));
+            col.height = Mathf.Sqrt(Vector3.Dot((pos1 - pos2), (pos1 - pos2))) * 1.2f;
         }
     }
 

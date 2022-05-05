@@ -10,7 +10,9 @@ public class MyStroke
     List<float> times;
     int numSamples;
 
-    float maxDistDelta = 0.1f;
+    List<float> edgeControlPointsSampledTimes;
+
+    float maxDistDelta = 0.15f;
     float maxTimeDelta = 0.2f;
 
     public PolyBezier pb { get; set; }
@@ -24,6 +26,8 @@ public class MyStroke
         positions = new List<Vector3>();
         velocities = new List<Vector3>();
         times = new List<float>();
+
+        edgeControlPointsSampledTimes = new List<float>();
 
         numSamples = 0;
         
@@ -64,11 +68,12 @@ public class MyStroke
     public void FitAndShow(List<CollisionData> collisionData)
     {
         Debug.Log("Start Constraint Solving");
-        cs = new ConstraintSolver(pb, collisionData, times, this.gameObject);
+        cs = new ConstraintSolver(pb, collisionData, edgeControlPointsSampledTimes, this.gameObject);
         Debug.Log("Constraint Generated");
         var newControlPoints = cs.solve();
         pb.setControlPoints(newControlPoints);
         Debug.Log("Constraint Solved");
+        //pb.ShowControl();
         pb.Render();
     }
 
@@ -77,9 +82,11 @@ public class MyStroke
         var cPoints = new List<Vector3>();
 
         Vector3 formerPos = positions[0];
-        Vector3 formerVel = velocities[0];
+        Vector3 formerTangent = velocities[0].normalized;
         float formerTime = times[0];
+
         cPoints.Add(positions[0]);
+        edgeControlPointsSampledTimes.Add(times[0]);
         //Debug.Log(numSamples);
 
         float distDelta = 0f;
@@ -87,14 +94,14 @@ public class MyStroke
         for(int i=1; i<numSamples; i++)
         {
             var nowPos = positions[i];
-            Vector3 nowVel;
+            Vector3 nowTangent;
 
             if (i > 0) {
-                nowVel = (positions[i] - positions[i - 1]) / (times[i] - times[i - 1]);
+                nowTangent = (positions[i] - positions[i - 1]).normalized;
             }
             else
             {
-                nowVel = (positions[i + 1] - positions[i]) / (times[i + 1] - times[i]);
+                nowTangent = (positions[i + 1] - positions[i]).normalized;
             }
 
             var nowTime = times[i];
@@ -102,12 +109,13 @@ public class MyStroke
             distDelta += (nowPos - positions[i-1]).magnitude;
             if (timeDelta > maxTimeDelta || distDelta > maxDistDelta) 
             {
-                var (p1, p2) = (formerPos + formerVel * timeDelta / 3, nowPos - nowVel * timeDelta / 3);
+                var (p1, p2) = (formerPos + formerTangent * distDelta / 3, nowPos - nowTangent * distDelta / 3);
                 cPoints.Add(p1);
                 cPoints.Add(p2);
                 cPoints.Add(nowPos);
+                edgeControlPointsSampledTimes.Add(nowTime);
                 formerPos = nowPos;
-                formerVel = nowVel;
+                formerTangent = nowTangent;
                 formerTime = nowTime;
                 distDelta = 0f;
             }

@@ -73,6 +73,10 @@ public class LineDrawer : MonoBehaviour
 
     public void AddCollisionData(string strokeName, float collisionTime, Vector3 collisionPos)
     {
+        if (!strokeNameToIdx.ContainsKey(strokeName))
+        {
+            return;
+        }
         int strokeIdx = strokeNameToIdx[strokeName];
 
         //Collision point -> Point on bezier curve

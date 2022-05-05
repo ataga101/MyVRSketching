@@ -37,15 +37,16 @@ public class ConstraintGenerator
         foreach(var cData in collisionData)
         {
             Debug.Log("Collision Data");
-            if(cData.collisionTime - formerTime > 0.1f || cData.strokeId != formerId)
+            if(cData.collisionTime - formerTime > 0.2f || cData.strokeId != formerId)
             {
-                Debug.Log((cData.strokeId, cData.collisionPos, cData.collisionTime)) ;
+                //Debug.Log((cData.strokeId, cData.collisionPos, cData.collisionTime)) ;
                 intersectionCandidate.Add((cData.strokeId, cData.collisionTime, cData.collisionPos));
                 formerTime = cData.collisionTime;
                 formerId = cData.strokeId;
             }
         }
         this.sampledTimes = sampledTimes;
+        this.candidateNum = intersectionCandidate.Count;
     }
 
 
@@ -57,18 +58,13 @@ public class ConstraintGenerator
         List<(int, Vector3)> retc0Constraint = new List<(int, Vector3)>();
         List<(int, Vector3)> rettangentConstraint = new List<(int, Vector3)>();
 
-        var nowIntersectionCandidate = intersectionCandidate;
-
-        int numDisabled = 0;
-        //Debug.Log("aHOGE1");
+        var nowIntersectionCandidate = new List<(int, float, Vector3)>();
 
         for (int i=0; i<candidateNum; i++)
         {
-            if (disableMap[i])
+            if (!disableMap[i])
             {
-                Debug.Log("Removed");
-                nowIntersectionCandidate.RemoveAt(i - numDisabled);
-                numDisabled++;
+                nowIntersectionCandidate.Add(intersectionCandidate[i]);
             }
         }
 
@@ -89,7 +85,7 @@ public class ConstraintGenerator
         for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count; i++)
         {
             var (strokeId, collisionTime, collisionPos) = nowIntersectionCandidate[candidateIdx];
-            Debug.Log((i, pb.bezierCount, sampledTimes.Count));
+            //Debug.Log((i, pb.bezierCount, sampledTimes.Count));
 
             if (sampledTimes[i] <= collisionTime && sampledTimes[i + 1] >= collisionTime)
             {
@@ -128,7 +124,7 @@ public class ConstraintGenerator
             }
         }
 
-        //Debug.Log(retc0Constraint.Count);
+        Debug.Log(retc0Constraint.Count);
         return (pb.controlPoints, retc0Constraint, rettangentConstraint);
     }
 }
