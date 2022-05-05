@@ -102,7 +102,7 @@ public class MyStroke
             distDelta += (nowPos - positions[i-1]).magnitude;
             if (timeDelta > maxTimeDelta || distDelta > maxDistDelta) 
             {
-                var (p1, p2) = calcBestFitBezierControlPoints(formerPos, nowPos, formerVel, nowVel, positions, timeDelta);
+                var (p1, p2) = (formerPos + formerVel * timeDelta / 3, nowPos - nowVel * timeDelta / 3);
                 cPoints.Add(p1);
                 cPoints.Add(p2);
                 cPoints.Add(nowPos);
