@@ -57,8 +57,8 @@ public class Bezier : MonoBehaviour
 
         for(int i=0; i<=numSegment; i++)
         {
-            float nowt = i / (float)numSegment;
-            Vector3 point = GetPoint(t);
+            float nowt = (float)i / (float)numSegment;
+            Vector3 point = GetPoint(nowt);
             var nowDist = Mathf.Sqrt(Vector3.Dot(point - pos, point - pos));
             if(nowDist < dist)
             {

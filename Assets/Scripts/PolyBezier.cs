@@ -54,22 +54,12 @@ public class PolyBezier : MonoBehaviour
         var bestBezier = beziers[bestIdx];
         var (L1, L2) = bestBezier.Split(bestT);
 
-        //Update Beziers
-        var newBezier1 = gameObject.AddComponent<Bezier>();
-        var newBezier2 = gameObject.AddComponent<Bezier>();
-        newBezier1.SetPoint(L1);
-        newBezier2.SetPoint(L2);
-
-        Destroy(beziers[bestIdx]);
-        beziers.RemoveAt(bestIdx);
-
-        beziers.Insert(bestIdx, newBezier2);
-        beziers.Insert(bestIdx, newBezier1);
-
         //Update control points
-        var pointsToInsert = new List<Vector3>() { L1[1], L1[2], L1[3], L2[2], L2[3] };
-        controlPoints.RemoveRange(bestIdx * 3 + 1, bestIdx * 3 + 3);
+        var pointsToInsert = new List<Vector3>() { L1[1], L1[2], L1[3], L2[1], L2[2] };
+        controlPoints.RemoveRange(bestIdx * 3 + 1, 2);
         controlPoints.InsertRange(bestIdx * 3 + 1, pointsToInsert);
+
+        this.setControlPoints(this.controlPoints);
 
         return bestIdx * 3 + 3;
     }
