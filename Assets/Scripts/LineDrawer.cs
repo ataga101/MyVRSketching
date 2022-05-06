@@ -6,7 +6,7 @@ using Valve.VR;
 public class LineDrawer : MonoBehaviour
 {
     //MyStrokes
-    public List<MyStroke> MyStrokes;
+    public List<MyStroke> MyStrokes = new List<MyStroke> ();
     MyStroke nowMyStroke = null;
     int StrokeIdx = 0;
     private Dictionary<string, int> strokeNameToIdx = new Dictionary<string, int>();
@@ -38,8 +38,6 @@ public class LineDrawer : MonoBehaviour
 
             //Create a new stroke
             nowMyStroke = new MyStroke(StrokeIdx);
-            strokeNameToIdx[nowMyStroke.gameObject.name] = StrokeIdx;
-            StrokeIdx++;
             //Add a sample
             nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
@@ -67,12 +65,15 @@ public class LineDrawer : MonoBehaviour
             nowMyStroke.SetCollision();
             //Debug.Log("Set collider");
             MyStrokes.Add(nowMyStroke);
+            strokeNameToIdx[nowMyStroke.gameObject.name] = StrokeIdx;
+            StrokeIdx++;
             //Debug.Log("Ended MyStroke Sketching");
         }
     }
 
     public void AddCollisionData(string strokeName, float collisionTime, Vector3 collisionPos)
     {
+        Debug.Log("Added collision");
         if (!strokeNameToIdx.ContainsKey(strokeName))
         {
             return;

@@ -90,7 +90,7 @@ public class MyStroke
         if(positions.Count > 10)
         {
             //Cut first 7% of the stroke
-            float cutTime = 0.7f * getTime();
+            float cutTime = 0.07f * getTime();
 
             for(startIdx = 0; times[startIdx] - times[0] < cutTime; startIdx++)
             {
@@ -107,7 +107,7 @@ public class MyStroke
 
         float distDelta = 0f;
 
-        for(int i=startIdx; i<numSamples; i++)
+        for(int i=startIdx+1; i<numSamples; i++)
         {
             var nowPos = positions[i];
             Vector3 nowTangent;

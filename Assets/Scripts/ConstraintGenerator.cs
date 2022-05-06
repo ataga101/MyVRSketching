@@ -13,7 +13,7 @@ public class ConstraintGenerator
 
     private List<float> sampledTimes;
 
-    public float minControlPointDistance = 0.1f;
+    public float minControlPointDistance = 0.15f;
 
     GameObject cgObject;
 
@@ -36,10 +36,8 @@ public class ConstraintGenerator
 
         foreach(var cData in collisionData)
         {
-            Debug.Log("Collision Data");
             if(cData.collisionTime - formerTime > 0.2f || cData.strokeId != formerId)
             {
-                //Debug.Log((cData.strokeId, cData.collisionPos, cData.collisionTime)) ;
                 intersectionCandidate.Add((cData.strokeId, cData.collisionTime, cData.collisionPos));
                 formerTime = cData.collisionTime;
                 formerId = cData.strokeId;
@@ -67,28 +65,27 @@ public class ConstraintGenerator
                 nowIntersectionCandidate.Add(intersectionCandidate[i]);
             }
         }
-
-        //Debug.Log("aHOGE2");
         List<bool> ControlPointUsed = new List<bool>();
 
         for(int i=0; i<pb.controlPoints.Count; i++)
         {
             ControlPointUsed.Add(false);
         }
-
-        //Debug.Log(nowIntersectionCandidate.Count);
-        //Debug.Log("aHOGE34");
+        
         
         int candidateIdx = 0;
         int numSplit = 0;
 
-        for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count; i++)
+        for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count && i<sampledTimes.Count; i++)
         {
-            var (strokeId, collisionTime, collisionPos) = nowIntersectionCandidate[candidateIdx];
-            //Debug.Log((i, pb.bezierCount, sampledTimes.Count));
 
-            if (sampledTimes[i] <= collisionTime && sampledTimes[i + 1] >= collisionTime)
+            for (; candidateIdx < nowIntersectionCandidate.Count; candidateIdx++)
             {
+                var (strokeId, collisionTime, collisionPos) = nowIntersectionCandidate[candidateIdx];
+                if(sampledTimes[i + 1] < collisionTime)
+                {
+                    break;
+                }
                 var nearestControlPoint1 = pb.controlPoints[i * 3];
                 var nearestControlPoint2 = pb.controlPoints[(i + 1) * 3];
 
@@ -124,7 +121,6 @@ public class ConstraintGenerator
             }
         }
 
-        Debug.Log(retc0Constraint.Count);
         return (pb.controlPoints, retc0Constraint, rettangentConstraint);
     }
 }

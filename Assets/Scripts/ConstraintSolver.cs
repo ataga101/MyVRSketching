@@ -14,7 +14,7 @@ public class ConstraintSolver
 
     float eps = 10e-4f;
     float displacement_normalizer = 0.04f;
-    float lambda = 0.6f;
+    float lambda = 0.1f;
 
     ConstraintGenerator constraintGenerator;
 
@@ -119,7 +119,7 @@ public class ConstraintSolver
     {
         if (disabledMap.Count == 0)
         {
-            return Mathf.Exp(-1);
+            return Mathf.Exp(0);
         }
 
         float ret = 0f;
