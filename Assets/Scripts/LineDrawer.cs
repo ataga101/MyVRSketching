@@ -18,6 +18,8 @@ public class LineDrawer : MonoBehaviour
 
     bool writingNow = false;
 
+    bool isFreehandMode = false;
+
     List<CollisionData> cdList = new List<CollisionData>();
 
     void Start()
@@ -34,7 +36,6 @@ public class LineDrawer : MonoBehaviour
         {
             pose = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose");
             writingNow = true;
-            //Debug.Log("Started MyStroke Sketching");
 
             //Create a new stroke
             nowMyStroke = new MyStroke(StrokeIdx);
@@ -57,18 +58,29 @@ public class LineDrawer : MonoBehaviour
             nowMyStroke.addSample(pose.GetLocalPosition(SteamVR_Input_Sources.RightHand),
                 pose.GetVelocity(SteamVR_Input_Sources.RightHand),
                 Time.time);
-            nowMyStroke.endSampling();
-            nowMyStroke.FitAndShow(cdList);
-            cdList = new List<CollisionData>();
 
-            //Debug.Log("Rendered");
-            nowMyStroke.SetCollision();
-            //Debug.Log("Set collider");
+            if (!isFreehandMode)
+            {
+                nowMyStroke.endSampling();
+                nowMyStroke.FitAndShow(cdList);
+                cdList = new List<CollisionData>();
+
+                //Debug.Log("Rendered");
+                nowMyStroke.SetCollision();
+                //Debug.Log("Set collider");
+            }
             MyStrokes.Add(nowMyStroke);
             strokeNameToIdx[nowMyStroke.gameObject.name] = StrokeIdx;
             StrokeIdx++;
             //Debug.Log("Ended MyStroke Sketching");
         }
+
+        var changeMode = Iui.GetState(SteamVR_Input_Sources.LeftHand);
+        if (changeMode)
+        {
+            isFreehandMode = !isFreehandMode;
+        }
+
     }
 
     public void AddCollisionData(string strokeName, float collisionTime, Vector3 collisionPos)
