@@ -102,6 +102,18 @@ public class PolyBezier : MonoBehaviour
         }
     }
 
+    public Vector3 getTangentAt(int ctrlPtIdx)
+    {
+        if(ctrlPtIdx > 0)
+        {
+            return controlPoints[ctrlPtIdx] - controlPoints[ctrlPtIdx - 1];
+        }
+        else
+        {
+            return controlPoints[ctrlPtIdx + 1] - controlPoints[ctrlPtIdx]; 
+        }
+    }
+
     public void ShowControl()
     {
         LineRenderer lineRenderer;

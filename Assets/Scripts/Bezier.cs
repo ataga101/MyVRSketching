@@ -83,6 +83,11 @@ public class Bezier : MonoBehaviour
             var pos2 = GetPoint((i + 1) / (float)numCollisionSegment);
             //Debug.Log((pos1 , pos2));
 
+            if(float.IsNaN(pos1.x) || float.IsNaN(pos1.y) || float.IsNaN(pos1.z) || float.IsNaN(pos2.x) || float.IsNaN(pos2.y) || float.IsNaN(pos2.z))
+            {
+                return;
+            }
+
             col.center = Vector3.zero;
             col.direction = 2;
             col.radius = 0.005f;

@@ -22,6 +22,8 @@ public class LineDrawer : MonoBehaviour
 
     List<CollisionData> cdList = new List<CollisionData>();
 
+    bool formerLeftState = false;
+
     void Start()
     {
         MyStrokes = new List<MyStroke>();
@@ -76,10 +78,12 @@ public class LineDrawer : MonoBehaviour
         }
 
         var changeMode = Iui.GetState(SteamVR_Input_Sources.LeftHand);
-        if (changeMode)
+        if (changeMode != formerLeftState && changeMode)
         {
             isFreehandMode = !isFreehandMode;
         }
+
+        formerLeftState = changeMode;
 
     }
 

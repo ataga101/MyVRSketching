@@ -14,7 +14,7 @@ public class ConstraintSolver
 
     float eps = 10e-4f;
     float displacement_normalizer = 0.04f;
-    float lambda = 0.1f;
+    float lambda = 0.05f;
 
     ConstraintGenerator constraintGenerator;
 

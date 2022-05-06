@@ -76,7 +76,7 @@ public class ConstraintGenerator
         int candidateIdx = 0;
         int numSplit = 0;
 
-        for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count && i<sampledTimes.Count; i++)
+        for(int i=0; i<pb.bezierCount-1 && candidateIdx < nowIntersectionCandidate.Count && i<sampledTimes.Count-1; i++)
         {
 
             for (; candidateIdx < nowIntersectionCandidate.Count; candidateIdx++)
@@ -86,6 +86,8 @@ public class ConstraintGenerator
                 {
                     break;
                 }
+
+                //Decide intersection
                 var nearestControlPoint1 = pb.controlPoints[i * 3];
                 var nearestControlPoint2 = pb.controlPoints[(i + 1) * 3];
 
@@ -118,6 +120,7 @@ public class ConstraintGenerator
                 }
                 candidateIdx++;
                 retc0Constraint.Add((cpIdx, collisionPos));
+                
             }
         }
 
