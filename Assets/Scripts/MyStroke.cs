@@ -77,21 +77,37 @@ public class MyStroke
         pb.Render();
     }
 
+    private float getTime()
+    {
+        return times[times.Count - 1] - times[0];
+    }
+
     public void convertToPolyBezier()
     {
         var cPoints = new List<Vector3>();
+        int startIdx = 0;
 
-        Vector3 formerPos = positions[0];
-        Vector3 formerTangent = velocities[0].normalized;
-        float formerTime = times[0];
+        if(positions.Count > 10)
+        {
+            //Cut first 7% of the stroke
+            float cutTime = 0.7f * getTime();
 
-        cPoints.Add(positions[0]);
-        edgeControlPointsSampledTimes.Add(times[0]);
+            for(startIdx = 0; times[startIdx] - times[0] < cutTime; startIdx++)
+            {
+            }
+        }
+
+        Vector3 formerPos = positions[startIdx];
+        Vector3 formerTangent = velocities[startIdx].normalized;
+        float formerTime = times[startIdx];
+
+        cPoints.Add(positions[startIdx]);
+        edgeControlPointsSampledTimes.Add(times[startIdx]);
         //Debug.Log(numSamples);
 
         float distDelta = 0f;
 
-        for(int i=1; i<numSamples; i++)
+        for(int i=startIdx; i<numSamples; i++)
         {
             var nowPos = positions[i];
             Vector3 nowTangent;
