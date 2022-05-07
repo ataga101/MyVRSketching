@@ -28,8 +28,8 @@ public class PolyBezier : MonoBehaviour
     {
         var lineRenderer = gameObject.GetComponent<LineRenderer>();
         lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        lineRenderer.startColor = Color.white;
-        lineRenderer.endColor = Color.white;
+        lineRenderer.startColor = Color.black;
+        lineRenderer.endColor = Color.black;
         lineRenderer.startWidth = 0.01f;
         lineRenderer.endWidth = 0.01f;
         var Points = new List<Vector3>();

@@ -98,18 +98,13 @@ public class LineDrawer : MonoBehaviour
 
         //Collision point -> Point on bezier curve
         Debug.Assert(MyStrokes.Count > strokeIdx);
-        //Debug.Log("HOGE");
-        //Debug.Log((MyStrokes.Count, strokeIdx));
         var stroke = MyStrokes[strokeIdx];
-        //Debug.Log("HOGE2");
         var (pos, idx, T) = stroke.pb.getNearestPosAndIdxAndT(collisionPos);
-        //Debug.Log("HOGE3");
 
         var cd = new CollisionData(strokeNameToIdx[strokeName], collisionTime, pos);
         if(interactui || writingNow)
         {
             cdList.Add(cd);
-            //Debug.Log("FUGA");
         }
     }
 }

@@ -13,7 +13,7 @@ public class ConstraintGenerator
 
     private List<float> sampledTimes;
 
-    public float minControlPointDistance = 0.15f;
+    public float minControlPointDistance = 0.04f;
 
     GameObject cgObject;
 
